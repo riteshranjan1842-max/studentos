@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 
 interface AuthState {
@@ -10,7 +10,9 @@ interface AuthState {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  updateProfile: (patch: Partial<Omit<Profile, 'id' | 'created_at'>>) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -23,13 +25,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, created_at')
+      .select('id, full_name, avatar_url, email_reminders, class_reminder_mins, theme_color, created_at')
       .eq('id', userId)
       .maybeSingle();
     setProfile(data as Profile | null);
   }
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     supabase.auth.getSession().then(({ data }) => {
@@ -82,9 +89,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }
 
+  async function signInWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     setProfile(null);
+  }
+
+  async function updateProfile(patch: Partial<Omit<Profile, 'id' | 'created_at'>>) {
+    if (!session?.user) return { error: 'Not authenticated' };
+    const { error } = await supabase
+      .from('profiles')
+      .update(patch)
+      .eq('id', session.user.id);
+      
+    if (error) return { error: error.message };
+    setProfile(prev => prev ? { ...prev, ...patch } : null);
+    return { error: null };
   }
 
   return (
@@ -96,7 +126,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
+        updateProfile,
       }}
     >
       {children}

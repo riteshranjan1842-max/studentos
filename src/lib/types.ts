@@ -2,6 +2,9 @@ export interface Profile {
   id: string;
   full_name: string;
   avatar_url: string | null;
+  email_reminders?: boolean;
+  class_reminder_mins?: number;
+  theme_color?: string;
   created_at: string;
 }
 
@@ -13,6 +16,8 @@ export interface EducationItem {
   startYear: string;
   endYear: string;
   gpa: string;
+  is_current?: boolean;
+  current_year_sem?: string;
 }
 
 export interface ExperienceItem {
@@ -28,13 +33,24 @@ export interface ProjectItem {
   id: string;
   name: string;
   description: string;
-  link: string;
+  link?: string;
+  github_link?: string;
+  live_link?: string;
   tech: string;
+}
+
+export interface CustomSection {
+  id: string;
+  title: string;
+  type: 'education' | 'experience' | 'projects' | 'skills' | 'bullet-list' | 'text';
+  items: any[];
 }
 
 export interface ResumeData {
   id: string;
   user_id: string;
+  title: string | null;
+  sections: CustomSection[] | null;
   full_name: string | null;
   email: string | null;
   phone: string | null;
@@ -47,13 +63,21 @@ export interface ResumeData {
   tenth_marks: string | null;
   tenth_year: string | null;
   tenth_board: string | null;
+  tenth_school: string | null;
+  tenth_city: string | null;
   twelfth_marks: string | null;
   twelfth_year: string | null;
   twelfth_board: string | null;
+  twelfth_school: string | null;
+  twelfth_city: string | null;
   education: EducationItem[] | null;
   experience: ExperienceItem[] | null;
   skills: string[] | null;
   projects: ProjectItem[] | null;
+  certifications: string[] | null;
+  achievements: string[] | null;
+  body_font_size?: string | null;
+  layout_version?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -86,6 +110,10 @@ export interface DsaProblem {
   status: 'Unsolved' | 'In Progress' | 'Solved';
   solution_link: string | null;
   problem_link: string | null;
+  reattempt_at: string | null;
+  reattempt_days: number | null;
+  ai_judgment: string | null;
+  email_sent?: boolean;
   updated_at: string;
 }
 
@@ -106,6 +134,7 @@ export interface TimetableEntry {
   subject: string;
   start_time: string;
   end_time: string;
+  professor?: string | null;
   room: string | null;
   color: string;
   created_at: string;

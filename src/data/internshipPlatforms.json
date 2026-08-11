@@ -1,0 +1,520 @@
+{
+  "companyCareersTemplate": "https://www.google.com/search?q=%22{company}%22+internship+careers+apply",
+  "platforms": {
+    "Internshala": {
+      "baseUrl": "https://internshala.com/internships/keywords-",
+      "querySeparator": "%20",
+      "suffix": ""
+    },
+    "Unstop": {
+      "baseUrl": "https://unstop.com/internships?search=",
+      "querySeparator": "%20",
+      "suffix": "&opportunity=internships"
+    },
+    "LinkedIn": {
+      "baseUrl": "https://www.linkedin.com/jobs/search/?keywords=",
+      "querySeparator": "%20",
+      "suffix": "%20internship"
+    },
+    "Naukri": {
+      "baseUrl": "https://www.naukri.com/internship-jobs?k=",
+      "querySeparator": "-",
+      "suffix": ""
+    },
+    "Indeed": {
+      "baseUrl": "https://in.indeed.com/jobs?q=",
+      "querySeparator": "+",
+      "suffix": "+internship"
+    },
+    "Wellfound": {
+      "baseUrl": "https://wellfound.com/jobs?q=",
+      "querySeparator": "%20",
+      "suffix": ""
+    },
+    "Cutshort": {
+      "baseUrl": "https://cutshort.io/jobs?q=",
+      "querySeparator": "%20",
+      "suffix": ""
+    },
+    "HackerEarth": {
+      "baseUrl": "https://www.hackerearth.com/challenges/?search=",
+      "querySeparator": "%20",
+      "suffix": ""
+    },
+    "Turing": {
+      "baseUrl": "https://www.turing.com/jobs?q=",
+      "querySeparator": "%20",
+      "suffix": ""
+    },
+    "Handshake": {
+      "baseUrl": "https://joinhandshake.com/search?q=",
+      "querySeparator": "%20",
+      "suffix": ""
+    },
+    "Google Careers": {
+      "baseUrl": "https://www.google.com/about/careers/applications/jobs/results/?q=",
+      "querySeparator": "%20",
+      "suffix": "%20intern"
+    }
+  },
+  "internships": [
+    {
+      "id": "intern_google_ds",
+      "title": "Data Science Intern",
+      "company": "Google",
+      "domains": [
+        "Data Science/ML"
+      ],
+      "jobType": "Internship",
+      "workMode": "Hybrid",
+      "stipendValue": 45000,
+      "stipendText": "₹45,000 / month",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Bengaluru",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Within 1 month",
+      "certification": true,
+      "skills": [
+        "Python",
+        "Machine Learning",
+        "SQL"
+      ],
+      "postedDate": "2026-08-01",
+      "deadline": "2026-08-30",
+      "platforms": [
+        "LinkedIn",
+        "Google Careers"
+      ],
+      "careersUrl": "https://careers.google.com/"
+    },
+    {
+      "id": "intern_razorpay_fe",
+      "title": "Frontend Engineer Intern",
+      "company": "Razorpay",
+      "domains": [
+        "Frontend Development"
+      ],
+      "jobType": "Internship",
+      "workMode": "Remote",
+      "stipendValue": 35000,
+      "stipendText": "₹35,000 / month",
+      "durationText": "3 months",
+      "durationFilter": "2-3",
+      "location": "Remote",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Immediate",
+      "certification": false,
+      "skills": [
+        "React",
+        "TypeScript",
+        "Tailwind"
+      ],
+      "postedDate": "2026-08-08",
+      "deadline": "2026-09-15",
+      "platforms": [
+        "Internshala",
+        "LinkedIn",
+        "Cutshort"
+      ],
+      "careersUrl": "https://razorpay.com/jobs/"
+    },
+    {
+      "id": "intern_cred_fs",
+      "title": "Full Stack Developer Intern",
+      "company": "CRED",
+      "domains": [
+        "Full Stack Development",
+        "Frontend Development",
+        "Backend Development"
+      ],
+      "jobType": "Full-time Internship",
+      "workMode": "On-site",
+      "stipendValue": 50000,
+      "stipendText": "₹50,000 / month",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Bengaluru",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Immediate",
+      "certification": true,
+      "skills": [
+        "React",
+        "Node.js",
+        "MongoDB"
+      ],
+      "postedDate": "2026-08-05",
+      "deadline": "2026-09-05",
+      "platforms": [
+        "Unstop",
+        "LinkedIn",
+        "Indeed"
+      ],
+      "careersUrl": "https://careers.cred.club/"
+    },
+    {
+      "id": "intern_zepto_be",
+      "title": "Backend Developer Intern",
+      "company": "Zepto",
+      "domains": [
+        "Backend Development"
+      ],
+      "jobType": "Internship",
+      "workMode": "On-site",
+      "stipendValue": 30000,
+      "stipendText": "₹30,000 / month",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Mumbai",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Within 1 month",
+      "certification": false,
+      "skills": [
+        "Node.js",
+        "Express",
+        "PostgreSQL"
+      ],
+      "postedDate": "2026-08-10",
+      "deadline": "2026-08-25",
+      "platforms": [
+        "LinkedIn",
+        "Naukri"
+      ],
+      "careersUrl": "https://www.zeptonow.com/careers"
+    },
+    {
+      "id": "intern_swiggy_design",
+      "title": "UI/UX Design Intern",
+      "company": "Swiggy",
+      "domains": [
+        "UI/UX Design"
+      ],
+      "jobType": "Part-time Internship",
+      "workMode": "Hybrid",
+      "stipendValue": 25000,
+      "stipendText": "₹25,000 / month",
+      "durationText": "3 months",
+      "durationFilter": "2-3",
+      "location": "Bengaluru",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Flexible",
+      "certification": false,
+      "skills": [
+        "Figma",
+        "Adobe XD",
+        "Wireframing"
+      ],
+      "postedDate": "2026-08-04",
+      "deadline": "2026-08-28",
+      "platforms": [
+        "Internshala",
+        "Unstop"
+      ],
+      "careersUrl": "https://careers.swiggy.com/"
+    },
+    {
+      "id": "intern_aicte_virtual_web",
+      "title": "Web Development Virtual Internship",
+      "company": "AICTE Virtual Portals",
+      "domains": [
+        "Frontend Development",
+        "Full Stack Development"
+      ],
+      "jobType": "Virtual Internship",
+      "workMode": "Remote",
+      "stipendValue": 0,
+      "stipendText": "Unpaid / Experience",
+      "durationText": "2 months",
+      "durationFilter": "2-3",
+      "location": "Remote",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Immediate",
+      "certification": true,
+      "skills": [
+        "HTML",
+        "CSS",
+        "JavaScript"
+      ],
+      "postedDate": "2026-08-09",
+      "deadline": "2026-09-30",
+      "platforms": [
+        "Unstop",
+        "Internshala"
+      ],
+      "careersUrl": "https://internship.aicte-india.org/"
+    },
+    {
+      "id": "intern_groww_mob",
+      "title": "Mobile App Intern",
+      "company": "Groww",
+      "domains": [
+        "Mobile App Development"
+      ],
+      "jobType": "Internship",
+      "workMode": "Remote",
+      "stipendValue": 40000,
+      "stipendText": "₹40,000 / month",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Remote",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Immediate",
+      "certification": false,
+      "skills": [
+        "React Native",
+        "Flutter",
+        "iOS"
+      ],
+      "postedDate": "2026-08-07",
+      "deadline": "2026-09-20",
+      "platforms": [
+        "LinkedIn",
+        "Indeed"
+      ],
+      "careersUrl": "https://groww.in/careers"
+    },
+    {
+      "id": "intern_aws_cloud",
+      "title": "Cloud Engineering Intern",
+      "company": "AWS",
+      "domains": [
+        "DevOps/Cloud"
+      ],
+      "jobType": "Internship",
+      "workMode": "Hybrid",
+      "stipendValue": 60000,
+      "stipendText": "₹60,000 / month",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Hyderabad",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Immediate",
+      "certification": true,
+      "skills": [
+        "AWS",
+        "Docker",
+        "Linux"
+      ],
+      "postedDate": "2026-08-02",
+      "deadline": "2026-09-30",
+      "platforms": [
+        "LinkedIn",
+        "Unstop",
+        "Handshake"
+      ],
+      "careersUrl": "https://www.amazon.jobs/"
+    },
+    {
+      "id": "intern_pepper_content",
+      "title": "Content Writer Intern",
+      "company": "Pepper Content",
+      "domains": [
+        "Content Writing"
+      ],
+      "jobType": "Part-time Internship",
+      "workMode": "Remote",
+      "stipendValue": 12000,
+      "stipendText": "₹12,000 / month",
+      "durationText": "2 months",
+      "durationFilter": "2-3",
+      "location": "Remote",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Immediate",
+      "certification": false,
+      "skills": [
+        "SEO",
+        "Content Writing",
+        "Copywriting"
+      ],
+      "postedDate": "2026-08-09",
+      "deadline": "2026-08-22",
+      "platforms": [
+        "Internshala",
+        "Indeed"
+      ],
+      "careersUrl": "https://www.peppercontent.io/careers/"
+    },
+    {
+      "id": "intern_zomato_marketing",
+      "title": "Digital Marketing Intern",
+      "company": "Zomato",
+      "domains": [
+        "Digital Marketing"
+      ],
+      "jobType": "Internship",
+      "workMode": "On-site",
+      "stipendValue": 15000,
+      "stipendText": "₹15,000 / month",
+      "durationText": "3 months",
+      "durationFilter": "2-3",
+      "location": "Gurugram",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Immediate",
+      "certification": true,
+      "skills": [
+        "SEO",
+        "Social Media",
+        "Analytics"
+      ],
+      "postedDate": "2026-08-03",
+      "deadline": "2026-08-27",
+      "platforms": [
+        "Internshala",
+        "LinkedIn",
+        "Unstop"
+      ],
+      "careersUrl": "https://www.zomato.com/careers"
+    },
+    {
+      "id": "intern_forage_virtual_consulting",
+      "title": "Virtual Consulting Internship",
+      "company": "Forage Experience",
+      "domains": [
+        "Consulting"
+      ],
+      "jobType": "Virtual Internship",
+      "workMode": "Remote",
+      "stipendValue": 0,
+      "stipendText": "Unpaid / Free Simulated",
+      "durationText": "15 days",
+      "durationFilter": "15d",
+      "location": "Remote",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Flexible",
+      "certification": true,
+      "skills": [
+        "Consulting",
+        "Analysis",
+        "PowerPoint"
+      ],
+      "postedDate": "2026-08-11",
+      "deadline": "2026-10-31",
+      "platforms": [
+        "HackerEarth",
+        "Unstop"
+      ],
+      "careersUrl": "https://www.theforage.com/"
+    },
+    {
+      "id": "intern_hdfc_finance",
+      "title": "Financial Analyst Intern",
+      "company": "HDFC Bank",
+      "domains": [
+        "Finance & Accounting"
+      ],
+      "jobType": "Internship",
+      "workMode": "On-site",
+      "stipendValue": 8000,
+      "stipendText": "₹8,000 / month",
+      "durationText": "2 months",
+      "durationFilter": "2-3",
+      "location": "Mumbai",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Within 1 month",
+      "certification": false,
+      "skills": [
+        "Excel",
+        "Financial Modeling",
+        "Accounting"
+      ],
+      "postedDate": "2026-08-06",
+      "deadline": "2026-09-10",
+      "platforms": [
+        "Unstop",
+        "Naukri"
+      ],
+      "careersUrl": "https://www.hdfcbank.com/personal/about-us/careers"
+    },
+    {
+      "id": "intern_iisc_ml",
+      "title": "Machine Learning Research Intern",
+      "company": "IISc",
+      "domains": [
+        "Data Science/ML"
+      ],
+      "jobType": "Internship",
+      "workMode": "On-site",
+      "stipendValue": 0,
+      "stipendText": "Unpaid / Research Role",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Bengaluru",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Flexible",
+      "certification": true,
+      "skills": [
+        "Python",
+        "TensorFlow",
+        "Research"
+      ],
+      "postedDate": "2026-07-28",
+      "deadline": "2026-08-20",
+      "platforms": [
+        "Unstop",
+        "Handshake"
+      ],
+      "careersUrl": "https://iisc.ac.in/opportunities/"
+    },
+    {
+      "id": "intern_paytm_devops",
+      "title": "DevOps Automation Intern",
+      "company": "Paytm",
+      "domains": [
+        "DevOps/Cloud"
+      ],
+      "jobType": "Internship",
+      "workMode": "Hybrid",
+      "stipendValue": 20000,
+      "stipendText": "₹20,000 / month",
+      "durationText": "3 months",
+      "durationFilter": "2-3",
+      "location": "Noida",
+      "experienceLevel": "Fresher/No experience",
+      "startDate": "Flexible",
+      "certification": false,
+      "skills": [
+        "Python",
+        "Kubernetes",
+        "Git"
+      ],
+      "postedDate": "2026-08-10",
+      "deadline": "2026-09-02",
+      "platforms": [
+        "LinkedIn",
+        "Wellfound"
+      ],
+      "careersUrl": "https://paytm.com/careers/"
+    },
+    {
+      "id": "intern_turing_remote_se",
+      "title": "Remote Software Engineer Intern",
+      "company": "Turing",
+      "domains": [
+        "Full Stack Development",
+        "Backend Development"
+      ],
+      "jobType": "Internship",
+      "workMode": "Remote",
+      "stipendValue": 70000,
+      "stipendText": "₹70,000 / month",
+      "durationText": "6 months",
+      "durationFilter": "6+",
+      "location": "Remote",
+      "experienceLevel": "Some experience preferred",
+      "startDate": "Immediate",
+      "certification": true,
+      "skills": [
+        "React",
+        "Python",
+        "Docker"
+      ],
+      "postedDate": "2026-08-08",
+      "deadline": "2026-09-01",
+      "platforms": [
+        "Turing",
+        "Wellfound"
+      ],
+      "careersUrl": "https://www.turing.com/jobs"
+    }
+  ]
+}

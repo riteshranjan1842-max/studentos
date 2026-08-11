@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Plus, Check, Trash2, Loader2, Calendar, Clock, MapPin, Sparkles, TrendingUp, Target, Code2, Pencil, X, Save, CalendarPlus, Settings2 } from 'lucide-react';
+import { Plus, Check, Trash2, Loader2, Calendar, Clock, MapPin, Sparkles, Target, Code2, Pencil, CalendarPlus, Settings2, User, Trophy, Compass, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import type { QuickTask, StudentMetrics, TimetableEntry } from '../lib/types';
+import type { QuickTask, TimetableEntry } from '../lib/types';
 import TimetableModal, { type TimetableFormState } from '../components/TimetableModal';
+import { STRIVER_SHEET_PROBLEMS } from './DsaTracker';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const colorMap: Record<string, string> = {
@@ -26,13 +28,121 @@ export default function Dashboard() {
   const [newTask, setNewTask] = useState('');
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [metrics, setMetrics] = useState<StudentMetrics | null>(null);
-  const [loadingMetrics, setLoadingMetrics] = useState(true);
+  const [dueDsaCount, setDueDsaCount] = useState(0);
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [loadingTimetable, setLoadingTimetable] = useState(true);
   const [manageMode, setManageMode] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null);
+
+  // POTD State
+  const [potd, setPotd] = useState<{ title: string; link: string; difficulty: string; tags: string[] } | null>(null);
+  const [loadingPotd, setLoadingPotd] = useState(true);
+
+  // Striver progress state
+  const [striverProgress, setStriverProgress] = useState({ solved: 0, total: 455 });
+  const [loadingStriver, setLoadingStriver] = useState(true);
+
+  useEffect(() => {
+    async function fetchPotd() {
+      setLoadingPotd(true);
+      try {
+        const session = (await supabase.auth.getSession()).data.session;
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/potd`, {
+          method: 'POST',
+          headers
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.leetcode) {
+            setPotd(json.leetcode);
+            setLoadingPotd(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Edge Function potd failed, falling back to local rotation:', err);
+      }
+
+      // Fallback
+      const getDayOfYear = () => {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = now.getTime() - start.getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay);
+      };
+
+      const fallbackProblems = [
+        {
+          title: "Two Sum",
+          link: "https://leetcode.com/problems/two-sum/",
+          difficulty: "Easy",
+          tags: ["Arrays", "Hash Table"]
+        },
+        {
+          title: "Add Two Numbers",
+          link: "https://leetcode.com/problems/add-two-numbers/",
+          difficulty: "Medium",
+          tags: ["Linked List", "Math"]
+        },
+        {
+          title: "Longest Substring Without Repeating Characters",
+          link: "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+          difficulty: "Medium",
+          tags: ["Hash Table", "String", "Sliding Window"]
+        },
+        {
+          title: "Container With Most Water",
+          link: "https://leetcode.com/problems/container-with-most-water/",
+          difficulty: "Medium",
+          tags: ["Arrays", "Two Pointers"]
+        }
+      ];
+
+      const dayOfYear = getDayOfYear();
+      const index = dayOfYear % fallbackProblems.length;
+      setPotd(fallbackProblems[index]);
+      setLoadingPotd(false);
+    }
+    
+    fetchPotd();
+  }, []);
+
+  useEffect(() => {
+    async function loadStriverProgress() {
+      if (!user) return;
+      setLoadingStriver(true);
+      try {
+        const { data } = await supabase
+          .from('dsa_tracker')
+          .select('problem_name, status')
+          .eq('user_id', user.id);
+
+        if (data) {
+          const solved = data.filter((p) => 
+            p.status === 'Solved' && 
+            STRIVER_SHEET_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())
+          ).length;
+          
+          setStriverProgress({ solved, total: 455 });
+        }
+      } catch (err) {
+        console.error('Error loading striver progress:', err);
+      } finally {
+        setLoadingStriver(false);
+      }
+    }
+    loadStriverProgress();
+  }, [user]);
 
   const displayName = profile?.full_name || 'Student';
   const hour = new Date().getHours();
@@ -55,40 +165,31 @@ export default function Dashboard() {
   }, [user]);
 
   useEffect(() => {
-    async function loadMetrics() {
+    async function loadDueDsa() {
       if (!user) return;
       const { data } = await supabase
-        .from('student_metrics')
-        .select('id, user_id, cgpa, attendance_pct, dsa_solved, updated_at, created_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setMetrics((data as StudentMetrics | null) ?? null);
-      setLoadingMetrics(false);
+        .from('dsa_tracker')
+        .select('id, reattempt_at')
+        .eq('user_id', user.id);
+      
+      const due = (data ?? []).filter((p) => {
+        if (!p.reattempt_at) return false;
+        return new Date(p.reattempt_at) <= new Date();
+      }).length;
+      
+      setDueDsaCount(due);
     }
-    loadMetrics();
+    loadDueDsa();
   }, [user]);
-
-  async function saveMetrics(
-    patch: Partial<Pick<StudentMetrics, 'cgpa' | 'attendance_pct' | 'dsa_solved'>>,
-  ) {
-    if (!user) return;
-    const payload = { ...patch, user_id: user.id, updated_at: new Date().toISOString() };
-    const { data } = await supabase
-      .from('student_metrics')
-      .upsert(payload, { onConflict: 'user_id' })
-      .select('id, user_id, cgpa, attendance_pct, dsa_solved, updated_at, created_at')
-      .maybeSingle();
-    if (data) setMetrics(data as StudentMetrics);
-  }
 
   useEffect(() => {
     async function loadTimetable() {
       if (!user) return;
       const { data } = await supabase
-        .from('timetable_entries')
-        .select('id, user_id, day, subject, start_time, end_time, room, color, created_at')
+        .from('timetable')
+        .select('id, user_id, day:day_of_week, subject, start_time, end_time, professor, room, color, created_at')
         .eq('user_id', user.id)
-        .order('day', { ascending: true })
+        .order('day_of_week', { ascending: true })
         .order('start_time', { ascending: true });
       setTimetable((data as TimetableEntry[]) ?? []);
       setLoadingTimetable(false);
@@ -100,19 +201,20 @@ export default function Dashboard() {
     if (!user) return;
     const payload = {
       user_id: user.id,
-      day: data.day,
+      day_of_week: data.day,
       subject: data.subject.trim(),
       start_time: data.start_time,
       end_time: data.end_time,
       room: data.room.trim() || null,
       color: data.color,
+      branch: 'Computer Science',
     };
     if (id) {
       const { data: updated } = await supabase
-        .from('timetable_entries')
+        .from('timetable')
         .update(payload)
         .eq('id', id)
-        .select('id, user_id, day, subject, start_time, end_time, room, color, created_at')
+        .select('id, user_id, day:day_of_week, subject, start_time, end_time, professor, room, color, created_at')
         .maybeSingle();
       if (updated) {
         setTimetable((prev) =>
@@ -121,9 +223,9 @@ export default function Dashboard() {
       }
     } else {
       const { data: created } = await supabase
-        .from('timetable_entries')
+        .from('timetable')
         .insert(payload)
-        .select('id, user_id, day, subject, start_time, end_time, room, color, created_at')
+        .select('id, user_id, day:day_of_week, subject, start_time, end_time, professor, room, color, created_at')
         .maybeSingle();
       if (created) setTimetable((prev) => [...prev, created as TimetableEntry].sort(sortTimetable));
     }
@@ -133,7 +235,7 @@ export default function Dashboard() {
 
   async function deleteTimetableEntry(id: string) {
     setTimetable((prev) => prev.filter((e) => e.id !== id));
-    await supabase.from('timetable_entries').delete().eq('id', id);
+    await supabase.from('timetable').delete().eq('id', id);
   }
 
   function openAddModal() {
@@ -185,69 +287,158 @@ export default function Dashboard() {
           </h1>
           <p className="text-brand-100/70 mt-3 max-w-lg">
             Here's what your week looks like. You have{' '}
-            <span className="font-semibold text-white">{todayClasses.length} classes</span> today
-            and{' '}
-            <span className="font-semibold text-white">{tasks.length - completedCount} pending tasks</span>.
+            <span className="font-semibold text-white">{todayClasses.length} classes</span> today,{' '}
+            <span className="font-semibold text-white">{tasks.length - completedCount} pending tasks</span>
+            {dueDsaCount > 0 && (
+              <>
+                , and <span className="font-semibold text-rose-300 animate-pulse">{dueDsaCount} DSA reattempts</span> due today
+              </>
+            )}
+            .
           </p>
           <div className="flex flex-wrap gap-3 mt-5">
             <Pill icon={<Calendar className="w-3.5 h-3.5" />} label={`Today is ${todayName}`} />
             <Pill icon={<Clock className="w-3.5 h-3.5" />} label={`${todayClasses.length} classes today`} />
             <Pill icon={<Target className="w-3.5 h-3.5" />} label={`${progress}% tasks done`} />
+            {dueDsaCount > 0 && (
+              <Pill icon={<Clock className="w-3.5 h-3.5 text-rose-300 animate-pulse" />} label={`${dueDsaCount} DSA Reattempts Due`} />
+            )}
           </div>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <EditableStatCard
-          icon={<TrendingUp className="w-5 h-5" />}
-          label="Current CGPA"
-          color="emerald"
-          loading={loadingMetrics}
-          emptyText="N/A"
-          emptySub="Not set yet"
-          value={metrics?.cgpa != null ? metrics.cgpa.toFixed(2) : null}
-          sub="Your latest CGPA"
-          inputType="number"
-          inputStep="0.01"
-          inputMin={0}
-          inputMax={10}
-          inputPlaceholder="e.g. 8.75"
-          onSave={(v) => saveMetrics({ cgpa: v == null ? null : Number(v) })}
-        />
-        <EditableStatCard
-          icon={<Calendar className="w-5 h-5" />}
-          label="Attendance"
-          color="sky"
-          loading={loadingMetrics}
-          emptyText="N/A"
-          emptySub="Not set yet"
-          value={metrics?.attendance_pct != null ? `${metrics.attendance_pct.toFixed(0)}%` : null}
-          sub="This semester"
-          inputType="number"
-          inputStep="0.1"
-          inputMin={0}
-          inputMax={100}
-          inputPlaceholder="e.g. 89"
-          suffix="%"
-          onSave={(v) => saveMetrics({ attendance_pct: v == null ? null : Number(v) })}
-        />
-        <EditableStatCard
-          icon={<Code2 className="w-5 h-5" />}
-          label="DSA Solved"
-          color="violet"
-          loading={loadingMetrics}
-          emptyText="0"
-          emptySub="Not set yet"
-          value={metrics?.dsa_solved != null ? String(metrics.dsa_solved) : null}
-          sub="of 180 problems"
-          inputType="number"
-          inputStep="1"
-          inputMin={0}
-          inputPlaceholder="e.g. 45"
-          onSave={(v) => saveMetrics({ dsa_solved: v == null ? null : Math.round(Number(v)) })}
-        />
-        <StatCard icon={<Sparkles className="w-5 h-5" />} label="AI Credits" value="12" sub="remaining" color="amber" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 select-none">
+        
+        {/* Card 1: LeetCode POTD */}
+        <a 
+          href={potd?.link || "https://leetcode.com/problemset/all/"} 
+          target="_blank" 
+          rel="noreferrer" 
+          className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]"
+        >
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-amber-400 bg-amber-500/10">
+                <Code2 className="w-5 h-5" />
+              </div>
+              {potd && (
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                  potd.difficulty === 'Easy' 
+                    ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' 
+                    : potd.difficulty === 'Medium' 
+                      ? 'text-amber-300 bg-amber-500/10 border-amber-500/20' 
+                      : 'text-rose-300 bg-rose-500/10 border-rose-500/20'
+                }`}>
+                  {potd.difficulty}
+                </span>
+              )}
+            </div>
+            <div className="mt-3">
+              {loadingPotd ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                  <span className="text-xs text-slate-500">Loading POTD...</span>
+                </div>
+              ) : (
+                <>
+                  <h4 className="text-sm font-bold text-white leading-snug truncate" title={potd?.title}>
+                    {potd?.title || 'No active problem'}
+                  </h4>
+                  <div className="flex flex-wrap gap-1 mt-1.5 max-h-[38px] overflow-hidden">
+                    {potd?.tags.slice(0, 2).map((t, idx) => (
+                      <span key={idx} className="text-[8px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-ink-800 border border-ink-700 text-slate-400">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="mt-2.5 border-t border-ink-700/50 pt-2 flex items-center justify-between text-[10px]">
+            <span className="font-extrabold uppercase tracking-wider text-slate-500">LeetCode POTD</span>
+            <span className="text-brand-400 font-bold flex items-center gap-0.5 hover:text-brand-300">Solve <ExternalLink className="w-3 h-3" /></span>
+          </div>
+        </a>
+
+        {/* Card 2: Striver's A2Z Progress */}
+        <a 
+          href="https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2" 
+          target="_blank" 
+          rel="noreferrer" 
+          className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]"
+        >
+          <div>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-violet-400 bg-violet-500/10">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div className="mt-3">
+              {loadingStriver ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                  <span className="text-xs text-slate-500">Loading progress...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-2xl font-black text-white">{striverProgress.solved} / {striverProgress.total}</p>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">Problems Solved</p>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="mt-2.5 border-t border-ink-700/50 pt-2 flex items-center justify-between text-[10px]">
+            <span className="font-extrabold uppercase tracking-wider text-slate-500">Striver's A2Z</span>
+            <span className="text-brand-400 font-bold flex items-center gap-0.5 hover:text-brand-300">Sheet <ExternalLink className="w-3 h-3" /></span>
+          </div>
+        </a>
+
+        {/* Card 3: Coding Roadmap Quick Access */}
+        <div className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-emerald-400 bg-emerald-500/10 shrink-0">
+                <Compass className="w-4.5 h-4.5" />
+              </div>
+              <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-400">Coding Roadmap</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 mt-3">
+              <Link to="/tech/roadmap#stage-0" className="px-2 py-1 text-[9px] font-bold text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition-all text-center truncate">
+                Fundamentals
+              </Link>
+              <Link to="/tech/roadmap#stage-1" className="px-2 py-1 text-[9px] font-bold text-sky-300 hover:text-white bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 rounded-lg transition-all text-center truncate">
+                DSA
+              </Link>
+              <Link to="/tech/roadmap#stage-2" className="px-2 py-1 text-[9px] font-bold text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-all text-center truncate">
+                Web Dev
+              </Link>
+              <Link to="/tech/roadmap#stage-3" className="px-2 py-1 text-[9px] font-bold text-rose-300 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-all text-center truncate">
+                Systems
+              </Link>
+            </div>
+          </div>
+          <div className="border-t border-ink-700/50 pt-2 text-[10px] text-slate-500 text-center">
+            Quick Modules Navigation
+          </div>
+        </div>
+
+        {/* Card 4: AI Credits */}
+        <div className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]">
+          <div>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-amber-400 bg-amber-500/10">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-black text-white">100</p>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">AI Credits</p>
+            </div>
+          </div>
+          <div className="mt-2.5 border-t border-ink-700/50 pt-2 flex items-center justify-between text-[10px]">
+            <span className="font-extrabold uppercase tracking-wider text-slate-500">Credits Balance</span>
+            <span className="text-amber-400 font-bold uppercase tracking-wider text-[9px]">Remaining</span>
+          </div>
+        </div>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -329,8 +520,8 @@ export default function Dashboard() {
         <div className="lg:col-span-2 glass rounded-2xl p-5 card-hover">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-semibold text-white">Weekly Timetable</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Your classes for the week</p>
+              <h2 className="text-lg font-semibold text-white">Respective Day Schedule</h2>
+              <p className="text-sm text-slate-500 mt-0.5">Your classes for today</p>
             </div>
             {timetable.length > 0 && (
               <div className="flex items-center gap-2">
@@ -363,7 +554,7 @@ export default function Dashboard() {
               </div>
               <h3 className="text-base font-semibold text-white">No timetable yet</h3>
               <p className="text-sm text-slate-500 mt-1 max-w-xs">
-                Add your classes to see your weekly schedule here. It syncs to your account automatically.
+                Add your classes to see your schedule here. It syncs to your account automatically.
               </p>
               <button
                 onClick={openAddModal}
@@ -373,65 +564,75 @@ export default function Dashboard() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {days.map((day) => {
-                const dayClasses = timetable.filter((c) => c.day === day).sort(sortTimetable);
-                const isToday = day === todayName;
-                return (
-                  <div
-                    key={day}
-                    className={`rounded-xl p-3 border min-h-[140px] ${
-                      isToday ? 'bg-brand-600/5 border-brand-500/30' : 'bg-ink-800/40 border-ink-700/40'
-                    }`}
-                  >
-                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2.5 ${isToday ? 'text-brand-300' : 'text-slate-400'}`}>
-                      {day.slice(0, 3)}
-                    </p>
-                    <div className="space-y-2">
-                      {dayClasses.length === 0 ? (
-                        <p className="text-xs text-slate-600 italic">Free day</p>
-                      ) : (
-                        dayClasses.map((c) => (
-                          <div
-                            key={c.id}
-                            className={`group/entry relative rounded-lg p-2 border text-xs ${colorMap[c.color] ?? colorMap.sky}`}
-                          >
-                            <p className="font-semibold leading-tight pr-1">{c.subject}</p>
-                            <div className="flex items-center gap-1 mt-1 opacity-70">
-                              <Clock className="w-2.5 h-2.5" />
-                              <span>{c.start_time}</span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-brand-600/5 border border-brand-500/20 rounded-xl p-4">
+                <div>
+                  <h3 className="text-base font-semibold text-white uppercase tracking-wide">
+                    {todayName}'s Classes
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Showing today's schedule. You have {todayClasses.length} classes today.
+                  </p>
+                </div>
+              </div>
+
+              {todayClasses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center bg-ink-800/20 border border-ink-700/30 rounded-xl">
+                  <p className="text-sm text-slate-500 italic">No classes today. Enjoy your day! 🎉</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {todayClasses.sort(sortTimetable).map((c) => (
+                    <div
+                      key={c.id}
+                      className={`group/entry relative rounded-xl p-4 border card-hover ${colorMap[c.color] ?? colorMap.sky}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-base font-semibold text-white leading-tight">{c.subject}</p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-xs opacity-80">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{c.start_time} - {c.end_time}</span>
                             </div>
                             {c.room && (
-                              <div className="flex items-center gap-1 opacity-70">
-                                <MapPin className="w-2.5 h-2.5" />
-                                <span>{c.room}</span>
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span>Room: {c.room}</span>
                               </div>
                             )}
-                            {manageMode && (
-                              <div className="absolute top-1 right-1 flex gap-0.5">
-                                <button
-                                  onClick={() => openEditModal(c)}
-                                  className="p-1 rounded bg-ink-900/80 text-slate-300 hover:text-brand-300 transition-colors"
-                                  title="Edit"
-                                >
-                                  <Pencil className="w-2.5 h-2.5" />
-                                </button>
-                                <button
-                                  onClick={() => deleteTimetableEntry(c.id)}
-                                  className="p-1 rounded bg-ink-900/80 text-slate-300 hover:text-rose-400 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-2.5 h-2.5" />
-                                </button>
+                            {c.professor && (
+                              <div className="flex items-center gap-1.5">
+                                <User className="w-3.5 h-3.5" />
+                                <span>Prof: {c.professor}</span>
                               </div>
                             )}
                           </div>
-                        ))
-                      )}
+                        </div>
+
+                        {manageMode && (
+                          <div className="flex gap-1.5 shrink-0 ml-2">
+                            <button
+                              onClick={() => openEditModal(c)}
+                              className="p-1.5 rounded-lg bg-ink-900/80 text-slate-300 hover:text-brand-300 transition-colors"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteTimetableEntry(c.id)}
+                              className="p-1.5 rounded-lg bg-ink-900/80 text-slate-300 hover:text-rose-400 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -456,148 +657,6 @@ function Pill({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-function StatCard({
-  icon, label, value, sub, color,
-}: {
-  icon: React.ReactNode; label: string; value: string; sub: string; color: string;
-}) {
-  const colors: Record<string, string> = {
-    emerald: 'text-emerald-400 bg-emerald-500/10',
-    sky: 'text-sky-400 bg-sky-500/10',
-    violet: 'text-violet-400 bg-violet-500/10',
-    amber: 'text-amber-400 bg-amber-500/10',
-  };
-  return (
-    <div className="glass rounded-xl p-4 card-hover">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${colors[color]}`}>
-        {icon}
-      </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-sm text-slate-400 mt-0.5">{label}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
-    </div>
-  );
-}
 
-function EditableStatCard({
-  icon, label, color, value, sub, emptyText, emptySub, loading,
-  inputType, inputStep, inputMin, inputMax, inputPlaceholder, suffix, onSave,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-  value: string | null;
-  sub: string;
-  emptyText: string;
-  emptySub: string;
-  loading: boolean;
-  inputType: string;
-  inputStep?: string;
-  inputMin?: number;
-  inputMax?: number;
-  inputPlaceholder: string;
-  suffix?: string;
-  onSave: (v: string | null) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const colors: Record<string, string> = {
-    emerald: 'text-emerald-400 bg-emerald-500/10',
-    sky: 'text-sky-400 bg-sky-500/10',
-    violet: 'text-violet-400 bg-violet-500/10',
-  };
-
-  function startEdit() {
-    setDraft(value != null ? value.replace('%', '') : '');
-    setEditing(true);
-  }
-
-  function cancel() {
-    setEditing(false);
-    setDraft('');
-  }
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    onSave(draft.trim() === '' ? null : draft);
-    setSaving(false);
-    setEditing(false);
-  }
-
-  if (editing) {
-    return (
-      <div className="glass rounded-xl p-4 border-brand-500/30">
-        <div className="flex items-center justify-between mb-3">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors[color]}`}>
-            {icon}
-          </div>
-          <button onClick={cancel} className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-ink-800 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <form onSubmit={submit} className="space-y-2">
-          <div className="relative">
-            <input
-              type={inputType}
-              step={inputStep}
-              min={inputMin}
-              max={inputMax}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={inputPlaceholder}
-              autoFocus
-              className="w-full bg-ink-800 border border-ink-700 rounded-lg px-3 py-2 text-lg font-bold text-white placeholder-slate-600 focus:outline-none focus:border-brand-500 transition-colors"
-            />
-            {suffix && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 font-medium">{suffix}</span>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-          >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            Save
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="glass rounded-xl p-4 card-hover group relative">
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors[color]}`}>
-          {icon}
-        </div>
-        <button
-          onClick={startEdit}
-          title="Edit"
-          className="p-1.5 rounded-lg text-slate-500 hover:text-brand-400 hover:bg-brand-500/10 transition-all opacity-0 group-hover:opacity-100"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      {loading ? (
-        <div className="h-8 flex items-center">
-          <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
-        </div>
-      ) : value != null ? (
-        <p className="text-2xl font-bold text-white">{value}</p>
-      ) : (
-        <div>
-          <p className="text-2xl font-bold text-slate-600">{emptyText}</p>
-          <p className="text-xs text-slate-600 mt-0.5">{emptySub}</p>
-        </div>
-      )}
-      <p className="text-sm text-slate-400 mt-0.5">{label}</p>
-      {value != null && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
 
 

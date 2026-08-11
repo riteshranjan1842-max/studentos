@@ -2,9 +2,11 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import {
   GraduationCap, LayoutDashboard, Sparkles, CalendarCheck, TrendingUp, CalendarDays,
-  FileText, Globe, Briefcase, Code2, Map, Menu, X, LogOut, ChevronRight, Target,
+  FileText, Globe, Briefcase, Code2, Map, Menu, X, LogOut, ChevronRight, Target, Settings2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isSupabaseConfigured } from '../lib/supabase';
+import ControlCenterModal from './ControlCenterModal';
 
 interface NavItem {
   label: string;
@@ -60,6 +62,8 @@ export default function AppLayout() {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [controlCenterOpen, setControlCenterOpen] = useState(false);
+  const [controlCenterTab, setControlCenterTab] = useState<'settings' | 'notifications' | 'analytics'>('settings');
 
   const displayName = profile?.full_name || 'Student';
   const initials = displayName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() || 'S';
@@ -130,9 +134,16 @@ export default function AppLayout() {
             <p className="text-xs text-slate-500 truncate">Student Account</p>
           </div>
           <button
+            onClick={() => { setControlCenterTab('settings'); setControlCenterOpen(true); }}
+            title="Settings"
+            className="p-1.5 rounded-lg text-slate-550 hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
+          >
+            <Settings2 className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => signOut()}
             title="Sign out"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-550 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -143,6 +154,11 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-ink-950">
+      {!isSupabaseConfigured && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-sm text-amber-200">
+          Supabase is not configured. Add your project credentials to <code className="text-amber-100">.env</code> to enable auth and data sync.
+        </div>
+      )}
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 glass z-30">
         {sidebarContent}
@@ -186,6 +202,13 @@ export default function AppLayout() {
           <X className="w-5 h-5" />
         </button>
       )}
+
+      {/* Account Settings & Analytics Control Center */}
+      <ControlCenterModal
+        isOpen={controlCenterOpen}
+        onClose={() => setControlCenterOpen(false)}
+        initialTab={controlCenterTab}
+      />
     </div>
   );
 }

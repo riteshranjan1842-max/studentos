@@ -351,21 +351,20 @@ function AddClassForm({
     });
   }
 
-  const MOCK_SCHEDULE = [
-    { subject: 'Engineering Math', day_of_week: 'Monday', start_time: '09:00', end_time: '10:00', professor: 'Dr. Sharma', room: 'A-101' },
-    { subject: 'OOPS with C++', day_of_week: 'Monday', start_time: '10:00', end_time: '11:00', professor: 'Prof. Iyer', room: 'A-102' },
-    { subject: 'Discrete Mathematics', day_of_week: 'Monday', start_time: '14:00', end_time: '15:00', professor: 'Dr. Nair', room: 'B-201' },
-    { subject: 'DECO Lab', day_of_week: 'Tuesday', start_time: '09:00', end_time: '11:00', professor: 'Prof. Rao', room: 'Lab-1' },
-    { subject: 'Engineering Math', day_of_week: 'Tuesday', start_time: '11:00', end_time: '12:00', professor: 'Dr. Sharma', room: 'A-101' },
-    { subject: 'OOPS with C++', day_of_week: 'Wednesday', start_time: '09:00', end_time: '10:00', professor: 'Prof. Iyer', room: 'A-102' },
-    { subject: 'Discrete Mathematics', day_of_week: 'Wednesday', start_time: '10:00', end_time: '11:00', professor: 'Dr. Nair', room: 'B-201' },
-    { subject: 'DECO', day_of_week: 'Wednesday', start_time: '14:00', end_time: '15:00', professor: 'Prof. Rao', room: 'B-202' },
-    { subject: 'Engineering Math', day_of_week: 'Thursday', start_time: '09:00', end_time: '10:00', professor: 'Dr. Sharma', room: 'A-101' },
-    { subject: 'OOPS Lab', day_of_week: 'Thursday', start_time: '10:00', end_time: '12:00', professor: 'Prof. Iyer', room: 'Lab-2' },
-    { subject: 'Discrete Mathematics', day_of_week: 'Friday', start_time: '09:00', end_time: '10:00', professor: 'Dr. Nair', room: 'B-201' },
-    { subject: 'DECO', day_of_week: 'Friday', start_time: '10:00', end_time: '11:00', professor: 'Prof. Rao', room: 'B-202' },
-    { subject: 'OOPS with C++', day_of_week: 'Friday', start_time: '14:00', end_time: '15:00', professor: 'Prof. Iyer', room: 'A-102' },
-  ];
+
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  }
 
   async function handleImageScan(file: File | null, forceError = false) {
     setScanning(true);
@@ -376,16 +375,72 @@ function AddClassForm({
       const filename = (file?.name ?? '').toLowerCase();
       const shouldError = forceError || filename.includes('blur') || filename.includes('test-error');
 
-      // 2-second simulated AI scanning delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
       if (shouldError) {
+        // Simulated AI scanning delay for the error path
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         setScanError('Image is unreadable or blurry. Please upload a clear, well-lit picture of your timetable so the AI can map your classes accurately.');
         return;
       }
 
-      await onBulkAdd(MOCK_SCHEDULE);
-      setScanSuccess(`Successfully scanned and added ${MOCK_SCHEDULE.length} classes to your timetable!`);
+      if (!file) {
+        setScanError('No file selected.');
+        return;
+      }
+
+      // Convert file to base64
+      const base64Data = await fileToBase64(file);
+
+      // Get current auth session token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Call the remote timetable-scan edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/timetable-scan`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            image: base64Data,
+            mimeType: file.type,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        const detailStr = data.details ? ` Details: ${data.details}. Raw AI response: ${data.rawText}. Gemini Data: ${JSON.stringify(data.geminiData)}` : '';
+        throw new Error((data.error || 'Failed to scan image using AI.') + detailStr);
+      }
+
+      if (!data.readable) {
+        throw new Error(data.reason || 'AI could not read the timetable format. Try a clearer image.');
+      }
+
+      const scannedClasses = (data.classes ?? []).map((c: any) => ({
+        subject: c.subject,
+        day_of_week: c.day_of_week,
+        start_time: c.start_time,
+        end_time: c.end_time,
+        professor: c.professor || null,
+        room: c.room || null,
+      }));
+
+      if (scannedClasses.length === 0) {
+        setScanError('No classes could be identified in the timetable image.');
+        return;
+      }
+
+      await onBulkAdd(scannedClasses);
+      setScanSuccess(`Successfully scanned and added ${scannedClasses.length} classes to your timetable!`);
     } catch (err) {
       setScanError(err instanceof Error ? err.message : 'Failed to scan image. Please try again.');
     } finally {

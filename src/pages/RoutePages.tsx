@@ -1,49 +1,29 @@
-import {
-  FileText, CalendarCheck, TrendingUp, Briefcase, Map,
-} from 'lucide-react';
-import PlaceholderPage from './PlaceholderPage';
 import NotesGenerator from './NotesGenerator';
 import TrackersPage from './Trackers';
 import DsaTrackerPage from './DsaTracker';
 import TimetablePage from './Timetable';
 import ResumeBuilder from './ResumeBuilder';
 import PortfolioGenerator from './PortfolioGenerator';
+import AttendancePage from './Attendance';
+import CgpaPage from './CGPA';
+import AssignmentGenerator from './AssignmentGenerator';
+import CodingRoadmapPage from './CodingRoadmap';
+import InternshipFinderPage from './InternshipFinder';
 
 export function NotesGen() {
   return <NotesGenerator />;
 }
 
 export function AssignmentGen() {
-  return (
-    <PlaceholderPage
-      title="AI Assignment Generator"
-      description="Get AI-assisted drafts, outlines, and research pointers for your assignments. Provide the prompt, and let StudentOS structure your work."
-      icon={<FileText className="w-8 h-8" />}
-      accent="brand"
-    />
-  );
+  return <AssignmentGenerator />;
 }
 
 export function Attendance() {
-  return (
-    <PlaceholderPage
-      title="Attendance Tracker"
-      description="Track your subject-wise attendance, see your overall percentage, and get alerts when you're at risk of falling below the required threshold."
-      icon={<CalendarCheck className="w-8 h-8" />}
-      accent="emerald"
-    />
-  );
+  return <AttendancePage />;
 }
 
 export function CGPA() {
-  return (
-    <PlaceholderPage
-      title="CGPA Tracker"
-      description="Log your semester SGPA, visualize your academic progress over time, and project your final CGPA based on upcoming semesters."
-      icon={<TrendingUp className="w-8 h-8" />}
-      accent="sky"
-    />
-  );
+  return <CgpaPage />;
 }
 
 export function Timetable() {
@@ -59,14 +39,7 @@ export function Portfolio() {
 }
 
 export function InternshipFinder() {
-  return (
-    <PlaceholderPage
-      title="Internship Finder"
-      description="Discover internships matched to your skills and interests. Track applications, deadlines, and interview prep in one place."
-      icon={<Briefcase className="w-8 h-8" />}
-      accent="emerald"
-    />
-  );
+  return <InternshipFinderPage />;
 }
 
 export function DSATracker() {
@@ -74,14 +47,7 @@ export function DSATracker() {
 }
 
 export function CodingRoadmap() {
-  return (
-    <PlaceholderPage
-      title="Coding Roadmap"
-      description="Follow a structured learning path from foundations to advanced topics. Track each phase, check off milestones, and stay on course."
-      icon={<Map className="w-8 h-8" />}
-      accent="rose"
-    />
-  );
+  return <CodingRoadmapPage />;
 }
 
 export function Trackers() {

@@ -1,0 +1,99 @@
+{
+  "software-development": {
+    "label": "Software Development",
+    "subDomains": [
+      { "id": "frontend", "label": "Frontend Development" },
+      { "id": "backend", "label": "Backend Development" },
+      { "id": "fullstack", "label": "Full Stack Development" },
+      { "id": "mobile", "label": "Mobile App Development" },
+      { "id": "devops-cloud", "label": "DevOps/Cloud" },
+      { "id": "game-dev", "label": "Game Development" },
+      { "id": "qa-testing", "label": "QA/Software Testing" }
+    ]
+  },
+  "ai-data": {
+    "label": "AI & Data",
+    "subDomains": [
+      { "id": "genai-llm", "label": "Generative AI/LLMs" },
+      { "id": "agentic-ai", "label": "Agentic AI" },
+      { "id": "data-science-ml", "label": "Data Science/ML" },
+      { "id": "data-analytics", "label": "Data Analytics" },
+      { "id": "data-engineering", "label": "Data Engineering" },
+      { "id": "computer-vision", "label": "Computer Vision" },
+      { "id": "nlp", "label": "NLP" },
+      { "id": "ai-research", "label": "AI Research" }
+    ]
+  },
+  "design-creative": {
+    "label": "Design & Creative",
+    "subDomains": [
+      { "id": "ui-ux", "label": "UI/UX Design" },
+      { "id": "graphic", "label": "Graphic Design" },
+      { "id": "video-editing", "label": "Video Editing" },
+      { "id": "animation", "label": "Animation/Motion Graphics" },
+      { "id": "photography", "label": "Photography" }
+    ]
+  },
+  "content-media": {
+    "label": "Content & Media",
+    "subDomains": [
+      { "id": "content-writing", "label": "Content Writing" },
+      { "id": "copywriting", "label": "Copywriting" },
+      { "id": "social-media", "label": "Social Media Management" },
+      { "id": "journalism", "label": "Journalism" },
+      { "id": "podcast-audio", "label": "Podcast/Audio Editing" }
+    ]
+  },
+  "business-management": {
+    "label": "Business & Management",
+    "subDomains": [
+      { "id": "hr", "label": "Human Resources" },
+      { "id": "sales-bd", "label": "Sales & Business Development" },
+      { "id": "market-research", "label": "Market Research" },
+      { "id": "operations", "label": "Operations" },
+      { "id": "supply-chain", "label": "Supply Chain" },
+      { "id": "product-management", "label": "Product Management" },
+      { "id": "consulting", "label": "Consulting" }
+    ]
+  },
+  "finance-legal": {
+    "label": "Finance & Legal",
+    "subDomains": [
+      { "id": "finance-accounting", "label": "Finance & Accounting" },
+      { "id": "legal", "label": "Legal" },
+      { "id": "investment-banking", "label": "Investment/Banking" }
+    ]
+  },
+  "cybersecurity-blockchain": {
+    "label": "Cybersecurity & Blockchain",
+    "subDomains": [
+      { "id": "cybersecurity-hacking", "label": "Cybersecurity/Ethical Hacking" },
+      { "id": "blockchain-web3", "label": "Blockchain/Web3" }
+    ]
+  },
+  "marketing": {
+    "label": "Marketing",
+    "subDomains": [
+      { "id": "digital-marketing", "label": "Digital Marketing" },
+      { "id": "brand-marketing", "label": "Brand Marketing" },
+      { "id": "performance-marketing", "label": "Performance Marketing" }
+    ]
+  },
+  "core-eng-science": {
+    "label": "Core Engineering & Science",
+    "subDomains": [
+      { "id": "core-engineering", "label": "Mechanical/Electrical/Civil Engineering" },
+      { "id": "biotech-pharma", "label": "Biotechnology/Pharma" },
+      { "id": "environmental", "label": "Environmental Science" }
+    ]
+  },
+  "research-social-impact": {
+    "label": "Research & Social Impact",
+    "subDomains": [
+      { "id": "academic-research", "label": "Academic Research" },
+      { "id": "ngo-social", "label": "NGO/Social Impact" },
+      { "id": "govt-policy", "label": "Government/Public Policy" },
+      { "id": "teaching-education", "label": "Teaching/Education" }
+    ]
+  }
+}

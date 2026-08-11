@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { isSupabaseConfigured } from './lib/supabase';
 import AppLayout from './components/AppLayout';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -11,6 +12,7 @@ import {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
+  if (!isSupabaseConfigured) return <>{children}</>;
   if (loading) {
     return (
       <div className="min-h-screen bg-ink-950 flex items-center justify-center">
@@ -24,6 +26,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
+  if (!isSupabaseConfigured) return <>{children}</>;
   if (loading) {
     return (
       <div className="min-h-screen bg-ink-950 flex items-center justify-center">

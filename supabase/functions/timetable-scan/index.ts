@@ -1,4 +1,7 @@
+
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+declare const Deno: any;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,8 +62,10 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    // Attempt using Gemini 2.5 Flash first, with fallback to gemini-3.1-flash-lite
+    let model = "gemini-2.5-flash";
+    let geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,22 +85,60 @@ Deno.serve(async (req: Request) => {
           ],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 4096,
             responseMimeType: "application/json",
           },
         }),
       },
     );
 
+    let geminiData = await geminiRes.json();
+    const isDeprecated455 = geminiRes.status === 404 || 
+      (geminiData.error && geminiData.error.message && (
+        geminiData.error.message.includes("no longer available") || 
+        geminiData.error.message.includes("not found")
+      ));
+
+    if (isDeprecated455) {
+      console.warn(`Model ${model} unavailable. Falling back to gemini-3.1-flash-lite...`);
+      model = "gemini-3.1-flash-lite";
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: SYSTEM_PROMPT },
+                  {
+                    inline_data: {
+                      mime_type: body.mimeType,
+                      data: body.image,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: "application/json",
+            },
+          }),
+        },
+      );
+      geminiData = await geminiRes.json();
+    }
+
     if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
       return new Response(
-        JSON.stringify({ error: `Gemini API request failed (${geminiRes.status}): ${errText}` }),
+        JSON.stringify({ 
+          error: `Gemini API request failed (${geminiRes.status})`,
+          details: geminiData?.error?.message || "Unknown error"
+        }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-
-    const geminiData = await geminiRes.json();
     const rawText: string =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
@@ -117,9 +160,17 @@ Deno.serve(async (req: Request) => {
 
     try {
       parsed = JSON.parse(cleaned);
-    } catch {
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("[timetable-scan] JSON parse error:", errMsg);
+      console.error("[timetable-scan] raw text:", rawText);
       return new Response(
-        JSON.stringify({ error: "Failed to parse AI response as JSON." }),
+        JSON.stringify({
+          error: "Failed to parse AI response as JSON.",
+          details: errMsg,
+          rawText: rawText,
+          geminiData: geminiData,
+        }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -149,8 +200,9 @@ Deno.serve(async (req: Request) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
     return new Response(
-      JSON.stringify({ error: err.message ?? "Unknown error" }),
+      JSON.stringify({ error: errMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
