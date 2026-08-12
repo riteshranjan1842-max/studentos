@@ -51,6 +51,8 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' | 'reset-p
             setError("Email signups are disabled. Please log in to your Supabase Dashboard, navigate to Authentication -> Providers -> Email, and switch the 'Enable Email Signup' toggle ON.");
           } else if (errLower.includes('already registered') || errLower.includes('already exists')) {
             setDuplicateError(true);
+          } else if (errLower.includes('error sending confirmation email')) {
+            setError("We couldn't send your confirmation email right now. Please try again in a few minutes, or contact support if this persists.");
           } else {
             setError(result.error);
           }
@@ -104,7 +106,11 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' | 'reset-p
     const result = await resendConfirmationEmail(email);
     setResending(false);
     if (result.error) {
-      setError(result.error);
+      if (result.error.toLowerCase().includes('error sending confirmation email')) {
+        setError("We couldn't send your confirmation email right now. Please try again in a few minutes, or contact support if this persists.");
+      } else {
+        setError(result.error);
+      }
     } else {
       setSuccessMessage("Confirmation email resent successfully! Check your inbox.");
     }
