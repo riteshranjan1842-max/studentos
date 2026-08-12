@@ -129,10 +129,14 @@ const LEETCODE_FALLBACK_PROBLEMS = [
 ];
 
 // Curated Fallbacks for GeeksforGeeks
+// DOCUMENTED LINK-SOURCE PRIORITY RULE:
+// 1. LeetCode: Check if problem exists on LeetCode first.
+// 2. GeeksforGeeks Practice: If not on LeetCode, use GfG Practice.
+// 3. Fallback: If on neither, use other reliable platforms.
 const GFG_FALLBACK_PROBLEMS = [
   {
     title: "Kadane's Algorithm",
-    link: "https://www.geeksforgeeks.org/problems/kadanes-algorithm-1587115620/1",
+    link: "https://leetcode.com/problems/maximum-subarray/",
     difficulty: "Medium",
     tags: ["Arrays", "Dynamic Programming"]
   },
@@ -144,19 +148,19 @@ const GFG_FALLBACK_PROBLEMS = [
   },
   {
     title: "Missing number in array",
-    link: "https://www.geeksforgeeks.org/problems/missing-number-in-array1416/1",
+    link: "https://leetcode.com/problems/missing-number/",
     difficulty: "Easy",
     tags: ["Arrays", "Searching"]
   },
   {
     title: "Merge Without Extra Space",
-    link: "https://www.geeksforgeeks.org/problems/merge-two-sorted-arrays-1587115620/1",
+    link: "https://leetcode.com/problems/merge-sorted-array/",
     difficulty: "Hard",
     tags: ["Arrays", "Sorting"]
   },
   {
     title: "Parenthesis Checker",
-    link: "https://www.geeksforgeeks.org/problems/parenthesis-checker2744/1",
+    link: "https://leetcode.com/problems/valid-parentheses/",
     difficulty: "Easy",
     tags: ["Stacks", "Data Structures"]
   },
@@ -168,61 +172,61 @@ const GFG_FALLBACK_PROBLEMS = [
   },
   {
     title: "Binary Search",
-    link: "https://www.geeksforgeeks.org/problems/binary-search-1587115620/1",
+    link: "https://leetcode.com/problems/binary-search/",
     difficulty: "Easy",
     tags: ["Algorithms", "Searching"]
   },
   {
     title: "Reverse a linked list",
-    link: "https://www.geeksforgeeks.org/problems/reverse-a-linked-list/1",
+    link: "https://leetcode.com/problems/reverse-linked-list/",
     difficulty: "Easy",
     tags: ["Linked List"]
   },
   {
     title: "Detect Loop in linked list",
-    link: "https://www.geeksforgeeks.org/problems/detect-loop-in-linked-list/1",
+    link: "https://leetcode.com/problems/linked-list-cycle/",
     difficulty: "Medium",
     tags: ["Linked List", "Two-pointer"]
   },
   {
     title: "Diameter of Binary Tree",
-    link: "https://www.geeksforgeeks.org/problems/diameter-of-binary-tree/1",
+    link: "https://leetcode.com/problems/diameter-of-binary-tree/",
     difficulty: "Medium",
     tags: ["Trees", "Recursion"]
   },
   {
     title: "Height of Binary Tree",
-    link: "https://www.geeksforgeeks.org/problems/height-of-binary-tree/1",
+    link: "https://leetcode.com/problems/maximum-depth-of-binary-tree/",
     difficulty: "Easy",
     tags: ["Trees", "Recursion"]
   },
   {
     title: "Lowest Common Ancestor in a BST",
-    link: "https://www.geeksforgeeks.org/problems/lowest-common-ancestor-in-a-bst/1",
+    link: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/",
     difficulty: "Easy",
     tags: ["BST", "Trees"]
   },
   {
     title: "Spirally traversing a matrix",
-    link: "https://www.geeksforgeeks.org/problems/spirally-traversing-a-matrix-1587115621/1",
+    link: "https://leetcode.com/problems/spiral-matrix/",
     difficulty: "Medium",
     tags: ["Matrix", "Arrays"]
   },
   {
     title: "Search in a Rotated Array",
-    link: "https://www.geeksforgeeks.org/problems/search-in-a-rotated-array4618/1",
+    link: "https://leetcode.com/problems/search-in-rotated-sorted-array/",
     difficulty: "Medium",
     tags: ["Arrays", "Searching"]
   },
   {
     title: "Find triplets with zero sum",
-    link: "https://www.geeksforgeeks.org/problems/find-triplets-with-zero-sum/1",
+    link: "https://leetcode.com/problems/3sum/",
     difficulty: "Medium",
     tags: ["Arrays", "Sorting", "Two-pointer"]
   },
   {
     title: "Product array puzzle",
-    link: "https://www.geeksforgeeks.org/problems/product-array-puzzle4525/1",
+    link: "https://leetcode.com/problems/product-of-array-except-self/",
     difficulty: "Easy",
     tags: ["Arrays"]
   },

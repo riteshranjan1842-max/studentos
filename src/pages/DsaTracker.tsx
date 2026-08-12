@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Plus, Trash2, Loader2, ExternalLink, Code2, CheckCircle2,
   Circle, Clock, X, ChevronDown, Filter, AlertTriangle, Cpu, BookOpen, Layers, Play
@@ -7,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import type { DsaProblem } from '../lib/types';
 import DailyProblemsWidget from '../components/DailyProblemsWidget';
+import { NEETCODE_150_PROBLEMS } from '../data/neetcode150';
 
 interface DsaAttempt {
   id: string;
@@ -39,6 +41,28 @@ const TOPICS = [
 ] as const;
 
 const TOPIC_SET = new Set<string>(TOPICS);
+
+const NEETCODE_TOPICS = [
+  'Arrays & Hashing',
+  'Two Pointers',
+  'Sliding Window',
+  'Stack',
+  'Binary Search',
+  'Linked List',
+  'Trees',
+  'Tries',
+  'Heap / Priority Queue',
+  'Backtracking',
+  'Graphs',
+  'Advanced Graphs',
+  '1-D DP',
+  '2-D DP',
+  'Greedy',
+  'Intervals',
+  'Math & Geometry',
+  'Bit Manipulation',
+] as const;
+
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const;
 type Difficulty = (typeof DIFFICULTIES)[number];
 const STATUSES = ['Unsolved', 'In Progress', 'Solved'] as const;
@@ -73,6 +97,10 @@ export interface StriverProblem {
   solution_link?: string;
 }
 
+// DOCUMENTED LINK-SOURCE PRIORITY RULE FOR PROBLEMS:
+// 1. LeetCode: Check if problem exists on LeetCode first.
+// 2. GeeksforGeeks Practice: If not on LeetCode, use GfG Practice.
+// 3. Fallback: If on neither, use other reliable platforms.
 export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Set Matrix Zeroes", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/set-matrix-zeroes/", video_link: "https://youtu.be/N0MgLvceX7M", solution_link: "https://takeuforward.org/data-structure/set-matrix-zero/" },
   { name: "Pascal's Triangle I", topic: "Arrays & Vectors", difficulty: "Easy", problem_link: "https://leetcode.com/problems/pascals-triangle/", video_link: "https://youtu.be/bR7mQgwQ_o8", solution_link: "https://takeuforward.org/data-structure/program-to-generate-pascals-triangle" },
@@ -84,8 +112,8 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Merge Overlapping Subintervals", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/merge-intervals/", video_link: "https://youtu.be/IexN60k62jo", solution_link: "https://takeuforward.org/data-structure/merge-overlapping-sub-intervals/" },
   { name: "Merge two sorted arrays without extra space", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/merge-sorted-array/", video_link: "https://youtu.be/n7uwj04E0I4", solution_link: "https://takeuforward.org/data-structure/merge-two-sorted-arrays-without-extra-space/" },
   { name: "Find the Duplicate Number", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/find-the-duplicate-number/", video_link: "https://www.youtube.com/watch?v=32Ll35mhWg0&list=PLgUwDviBIf0rPG3Ictpu74YWBQ1CaBkm2&index=1", solution_link: "https://takeuforward.org/data-structure/find-the-duplicate-in-an-array-of-n1-integers/" },
-  { name: "Find the repeating and missing number", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://www.interviewbit.com/problems/repeat-and-missing-number-array/", video_link: "https://youtu.be/2D0D8HE6uak", solution_link: "https://takeuforward.org/data-structure/find-the-repeating-and-missing-numbers/" },
-  { name: "Inversion of Array (Pre-req: Merge Sort)", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://www.codingninjas.com/studio/problems/count-inversions_615", video_link: "https://youtu.be/AseUmwVNaoY", solution_link: "https://takeuforward.org/data-structure/count-inversions-in-an-array" },
+  { name: "Find the repeating and missing number", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/find-missing-and-repeating2512/1", video_link: "https://youtu.be/2D0D8HE6uak", solution_link: "https://takeuforward.org/data-structure/find-the-repeating-and-missing-numbers/" },
+  { name: "Inversion of Array (Pre-req: Merge Sort)", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/inversion-of-array-1587115620/1", video_link: "https://youtu.be/AseUmwVNaoY", solution_link: "https://takeuforward.org/data-structure/count-inversions-in-an-array" },
   { name: "Search in a 2D matrix", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://leetcode.com/problems/search-a-2d-matrix/", video_link: "https://youtu.be/ZYpYur0znng", solution_link: "https://takeuforward.org/data-structure/search-in-a-sorted-2d-matrix/" },
   { name: "Pow(x, n)", topic: "Arrays & Vectors", difficulty: "Easy", problem_link: "https://leetcode.com/problems/powx-n/", video_link: "https://youtu.be/l0YC3876qxg", solution_link: "https://takeuforward.org/data-structure/implement-powxn-x-raised-to-the-power-n/" },
   { name: "Majority Element-I", topic: "Arrays & Vectors", difficulty: "Easy", problem_link: "https://leetcode.com/problems/majority-element/", video_link: "https://youtu.be/nP_ns3uSh80", solution_link: "https://takeuforward.org/data-structure/find-the-majority-element-that-occurs-more-than-n-2-times/" },
@@ -95,8 +123,8 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Two Sum", topic: "Arrays & Vectors", difficulty: "Easy", problem_link: "https://leetcode.com/problems/two-sum/", video_link: "https://youtu.be/UXDSeD9mN-k", solution_link: "https://takeuforward.org/data-structure/two-sum-check-if-a-pair-with-given-sum-exists-in-array/" },
   { name: "4 Sum", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/4sum/", video_link: "https://youtu.be/eD95WRfh81c", solution_link: "https://takeuforward.org/data-structure/4-sum-find-quads-that-add-up-to-a-target-value/" },
   { name: "Longest Consecutive Sequence in an Array", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/longest-consecutive-sequence/solution/", video_link: "https://youtu.be/oO5uLE7EUlM", solution_link: "https://takeuforward.org/data-structure/longest-consecutive-sequence-in-an-array/" },
-  { name: "Largest Subarray with K sum", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://practice.geeksforgeeks.org/problems/largest-subarray-with-0-sum/1", video_link: "https://youtu.be/frf7qxiN2qU", solution_link: "https://takeuforward.org/data-structure/length-of-the-longest-subarray-with-zero-sum/" },
-  { name: "Count subarrays with given xor K", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://www.interviewbit.com/problems/subarray-with-given-xor/", video_link: "https://youtu.be/eZr-6p0B7ME", solution_link: "https://takeuforward.org/data-structure/count-the-number-of-subarrays-with-given-xor-k/" },
+  { name: "Largest Subarray with K sum", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/largest-subarray-with-0-sum/1", video_link: "https://youtu.be/frf7qxiN2qU", solution_link: "https://takeuforward.org/data-structure/length-of-the-longest-subarray-with-zero-sum/" },
+  { name: "Count subarrays with given xor K", topic: "Arrays & Vectors", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/subarrays-with-given-xor/1", video_link: "https://youtu.be/eZr-6p0B7ME", solution_link: "https://takeuforward.org/data-structure/count-the-number-of-subarrays-with-given-xor-k/" },
   { name: "Longest Substring Without Repeating Characters", topic: "Arrays & Vectors", difficulty: "Medium", problem_link: "https://leetcode.com/problems/longest-substring-without-repeating-characters/", video_link: "https://youtu.be/-zSxTJkcdAo?si=I2zfR-vlDMg0zU9z", solution_link: "https://takeuforward.org/data-structure/length-of-longest-substring-without-any-repeating-character/" },
   { name: "Reverse a LL", topic: "Linked List", difficulty: "Medium", problem_link: "https://leetcode.com/problems/reverse-linked-list/", video_link: "https://youtu.be/D2vI2DNJGd8?si=RCaLSx01qR21IBdh", solution_link: "https://takeuforward.org/data-structure/reverse-a-linked-list/" },
   { name: "Find Middle of Linked List", topic: "Linked List", difficulty: "Easy", problem_link: "https://leetcode.com/problems/middle-of-the-linked-list/", video_link: "https://youtu.be/7LjQ57RqgEc?si=ir_rRDio38rhamU_", solution_link: "https://takeuforward.org/data-structure/find-middle-element-in-a-linked-list/" },
@@ -109,70 +137,70 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Reverse LL in group of given size K", topic: "Linked List", difficulty: "Hard", problem_link: "https://leetcode.com/problems/reverse-nodes-in-k-group/", video_link: "https://youtu.be/lIar1skcQYI?si=_jFghHKX4eaK36a1", solution_link: "https://takeuforward.org/data-structure/reverse-linked-list-in-groups-of-size-k/" },
   { name: "Check if LL is palindrome or not", topic: "Linked List", difficulty: "Medium", problem_link: "https://leetcode.com/problems/palindrome-linked-list/", video_link: "https://youtu.be/lRY_G-u_8jk?si=BpM8hRYvXSYyjl-G", solution_link: "https://takeuforward.org/data-structure/check-if-given-linked-list-is-plaindrome/" },
   { name: "Find the starting point in LL", topic: "Linked List", difficulty: "Medium", problem_link: "https://leetcode.com/problems/linked-list-cycle-ii/", video_link: "https://youtu.be/2Kd0KKmmHFc?si=7UreDPRjRvapeVB0", solution_link: "https://takeuforward.org/data-structure/starting-point-of-loop-in-a-linked-list/" },
-  { name: "Flattening of LL", topic: "Linked List", difficulty: "Hard", problem_link: "https://practice.geeksforgeeks.org/problems/flattening-a-linked-list/1", video_link: "https://youtu.be/ykelywHJWLg?si=InMg9MmTHzY22NSR", solution_link: "https://takeuforward.org/data-structure/flattening-a-linked-list/" },
+  { name: "Flattening of LL", topic: "Linked List", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/flattening-a-linked-list/1", video_link: "https://youtu.be/ykelywHJWLg?si=InMg9MmTHzY22NSR", solution_link: "https://takeuforward.org/data-structure/flattening-a-linked-list/" },
   { name: "Rotate a LL", topic: "Linked List", difficulty: "Hard", problem_link: "https://leetcode.com/problems/rotate-list/description/", video_link: "https://youtu.be/uT7YI7XbTY8?si=ZaChW3a68c_v54Is", solution_link: "https://takeuforward.org/data-structure/rotate-a-linked-list/" },
   { name: "Clone a LL with random and next pointer", topic: "Linked List", difficulty: "Hard", problem_link: "https://leetcode.com/problems/copy-list-with-random-pointer/", video_link: "https://youtu.be/q570bKdrnlw?si=epZtpWvtNwuTf23o", solution_link: "https://takeuforward.org/data-structure/clone-linked-list-with-random-and-next-pointer/" },
   { name: "3 Sum", topic: "Linked List", difficulty: "Medium", problem_link: "https://leetcode.com/problems/3sum/", video_link: "https://youtu.be/DhFh8Kw7ymk", solution_link: "https://takeuforward.org/data-structure/3-sum-find-triplets-that-add-up-to-a-zero/" },
   { name: "Trapping Rainwater", topic: "Linked List", difficulty: "Hard", problem_link: "https://leetcode.com/problems/trapping-rain-water/", video_link: "https://youtu.be/1_5VuquLbXg?si=NFG6df318_6OtGvg", solution_link: "https://takeuforward.org/data-structure/trapping-rainwater/" },
   { name: "Remove duplicates from sorted array", topic: "Linked List", difficulty: "Easy", problem_link: "https://leetcode.com/problems/remove-duplicates-from-sorted-array/#:~:text=Input%3A%20nums%20%3D%20%5B0%2C,%2C%203%2C%20and%204%20respectively.", video_link: "https://youtu.be/37E9ckMDdTk?t=1887", solution_link: "https://takeuforward.org/data-structure/remove-duplicates-in-place-from-sorted-array/" },
   { name: "Maximum Consecutive Ones", topic: "Linked List", difficulty: "Easy", problem_link: "https://leetcode.com/problems/max-consecutive-ones/", video_link: "https://youtu.be/bYWLJb3vCWY?t=1124", solution_link: "https://takeuforward.org/data-structure/count-maximum-consecutive-ones-in-the-array/" },
-  { name: "N meetings in one room", topic: "Greedy", difficulty: "Medium", problem_link: "https://practice.geeksforgeeks.org/problems/n-meetings-in-one-room-1587115620/1", video_link: "https://youtu.be/mKfhTotEguk?si=2RELeq18mpmIIN3Q", solution_link: "https://takeuforward.org/data-structure/n-meetings-in-one-room/" },
-  { name: "Minimum number of platforms required for a railway", topic: "Greedy", difficulty: "Medium", problem_link: "https://practice.geeksforgeeks.org/problems/minimum-platforms-1587115620/1", video_link: "https://youtu.be/AsGzwR_FWok?si=165acXU_dtqOHuo9", solution_link: "https://takeuforward.org/data-structure/minimum-number-of-platforms-required-for-a-railway/" },
-  { name: "Job sequencing Problem", topic: "Greedy", difficulty: "Medium", problem_link: "https://practice.geeksforgeeks.org/problems/job-sequencing-problem-1587115620/1", video_link: "https://youtu.be/QbwltemZbRg?si=wvcemJ5BLPlTRmkG", solution_link: "https://takeuforward.org/data-structure/job-sequencing-problem/" },
-  { name: "Fractional Knapsack", topic: "Greedy", difficulty: "Medium", problem_link: "https://practice.geeksforgeeks.org/problems/fractional-knapsack-1587115620/1", video_link: "https://youtu.be/1ibsQrnuEEg?si=8R2By3wpHo0zZVHE", solution_link: "https://takeuforward.org/data-structure/fractional-knapsack-problem-greedy-approach/" },
+  { name: "N meetings in one room", topic: "Greedy", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/n-meetings-in-one-room-1587115620/1", video_link: "https://youtu.be/mKfhTotEguk?si=2RELeq18mpmIIN3Q", solution_link: "https://takeuforward.org/data-structure/n-meetings-in-one-room/" },
+  { name: "Minimum number of platforms required for a railway", topic: "Greedy", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/minimum-platforms-1587115620/1", video_link: "https://youtu.be/AsGzwR_FWok?si=165acXU_dtqOHuo9", solution_link: "https://takeuforward.org/data-structure/minimum-number-of-platforms-required-for-a-railway/" },
+  { name: "Job sequencing Problem", topic: "Greedy", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/job-sequencing-problem-1587115620/1", video_link: "https://youtu.be/QbwltemZbRg?si=wvcemJ5BLPlTRmkG", solution_link: "https://takeuforward.org/data-structure/job-sequencing-problem/" },
+  { name: "Fractional Knapsack", topic: "Greedy", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/fractional-knapsack-1587115620/1", video_link: "https://youtu.be/1ibsQrnuEEg?si=8R2By3wpHo0zZVHE", solution_link: "https://takeuforward.org/data-structure/fractional-knapsack-problem-greedy-approach/" },
   { name: "Minimum coins", topic: "Greedy", difficulty: "Hard", problem_link: "https://leetcode.com/problems/coin-change/", video_link: "https://www.youtube.com/watch?v=myPeWb3Y68A", solution_link: "https://takeuforward.org/data-structure/minimum-coins-dp-20/" },
   { name: "Assign Cookies", topic: "Greedy", difficulty: "Easy", problem_link: "https://leetcode.com/problems/assign-cookies/", video_link: "https://youtu.be/DIX2p7vb9co?si=GofAIDimue-Av0Fi", solution_link: "https://takeuforward.org/data-structure/assign-cookies" },
-  { name: "Subset Sums", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://practice.geeksforgeeks.org/problems/subset-sums2234/1", video_link: "https://www.youtube.com/watch?v=rYkfBRtMJr8&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=52", solution_link: "https://takeuforward.org/data-structure/subset-sum-sum-of-all-subsets/" },
+  { name: "Subset Sums", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/subset-sums2234/1", video_link: "https://www.youtube.com/watch?v=rYkfBRtMJr8&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=52", solution_link: "https://takeuforward.org/data-structure/subset-sum-sum-of-all-subsets/" },
   { name: "Subsets II", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://leetcode.com/problems/subsets-ii/", video_link: "https://www.youtube.com/watch?v=RIn3gOkbhQE&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=53", solution_link: "https://takeuforward.org/data-structure/subset-ii-print-all-the-unique-subsets/" },
   { name: "Combination Sum", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://leetcode.com/problems/combination-sum/", video_link: "https://www.youtube.com/watch?v=OyZFFqQtu98&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=49", solution_link: "https://takeuforward.org/data-structure/combination-sum-1/" },
   { name: "Combination Sum II", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://leetcode.com/problems/combination-sum-ii/", video_link: "https://www.youtube.com/watch?v=G1fRTGRxXU8&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=50", solution_link: "https://takeuforward.org/data-structure/combination-sum-ii-find-all-unique-combinations/" },
-  { name: "Palindrome partitioning", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/palindrome-partitioning", video_link: "https://youtu.be/_H8V5hJUGd0", solution_link: "" },
+  { name: "Palindrome partitioning", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://leetcode.com/problems/palindrome-partitioning/", video_link: "https://youtu.be/_H8V5hJUGd0", solution_link: "" },
   { name: "Permutation Sequence", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://leetcode.com/problems/permutation-sequence/", video_link: "https://www.youtube.com/watch?v=wT7gcXLYoao&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=55", solution_link: "https://takeuforward.org/data-structure/find-k-th-permutation-sequence/" },
   { name: "Permutations of a String", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://leetcode.com/problems/permutations/", video_link: "https://www.youtube.com/watch?v=f2ic2Rsc9pU&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=52", solution_link: "https://takeuforward.org/data-structure/print-all-permutations-of-a-string-array/" },
   { name: "N Queen", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://leetcode.com/problems/n-queens/", video_link: "https://www.youtube.com/watch?v=i05Ju7AftcM&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=57", solution_link: "https://takeuforward.org/data-structure/n-queen-problem-return-all-distinct-solutions-to-the-n-queens-puzzle/" },
   { name: "Sudoku Solver", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://leetcode.com/problems/sudoku-solver/", video_link: "https://www.youtube.com/watch?v=FWAIf_EVUKE&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=58", solution_link: "https://takeuforward.org/data-structure/sudoku-solver/" },
-  { name: "M Coloring Problem", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/m-coloring-problem", video_link: "https://www.youtube.com/watch?v=wuVwUK25Rfc&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=59", solution_link: "https://takeuforward.org/data-structure/m-coloring-problem/" },
-  { name: "Rat in a Maze", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://practice.geeksforgeeks.org/problems/rat-in-a-maze-problem-i/1", video_link: "https://www.youtube.com/watch?v=bLGZhJlt4y0&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=60", solution_link: "https://takeuforward.org/data-structure/rat-in-a-maze/" },
-  { name: "Word Break (print all ways)", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/word-break", video_link: "", solution_link: "" },
-  { name: "The N-th root of an integer", topic: "Binary Search", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/find-nth-root-of-a-number", video_link: "https://www.youtube.com/watch?v=WjpswYrS2nY&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=62", solution_link: "https://takeuforward.org/data-structure/nth-root-of-a-number-using-binary-search/" },
-  { name: "Matrix Median", topic: "Binary Search", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/matrix-median", video_link: "https://youtu.be/Q9wXgdxJq48?si=ScI_0uzJh7yg8nrX", solution_link: "https://takeuforward.org/data-structure/median-of-row-wise-sorted-matrix/" },
+  { name: "M Coloring Problem", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/m-coloring-problem-1587115620/1", video_link: "https://www.youtube.com/watch?v=wuVwUK25Rfc&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=59", solution_link: "https://takeuforward.org/data-structure/m-coloring-problem/" },
+  { name: "Rat in a Maze", topic: "Recursion & Backtracking", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/rat-in-a-maze-problem/1", video_link: "https://www.youtube.com/watch?v=bLGZhJlt4y0&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=60", solution_link: "https://takeuforward.org/data-structure/rat-in-a-maze/" },
+  { name: "Word Break (print all ways)", topic: "Recursion & Backtracking", difficulty: "Medium", problem_link: "https://leetcode.com/problems/word-break-ii/", video_link: "", solution_link: "" },
+  { name: "The N-th root of an integer", topic: "Binary Search", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/find-nth-root-of-m5843/1", video_link: "https://www.youtube.com/watch?v=WjpswYrS2nY&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=62", solution_link: "https://takeuforward.org/data-structure/nth-root-of-a-number-using-binary-search/" },
+  { name: "Matrix Median", topic: "Binary Search", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/median-in-a-row-wise-sorted-matrix1527/1", video_link: "https://youtu.be/Q9wXgdxJq48?si=ScI_0uzJh7yg8nrX", solution_link: "https://takeuforward.org/data-structure/median-of-row-wise-sorted-matrix/" },
   { name: "Single element in sorted array", topic: "Binary Search", difficulty: "Medium", problem_link: "https://leetcode.com/problems/single-element-in-a-sorted-array/", video_link: "https://youtu.be/AZOmHuHadxQ", solution_link: "https://takeuforward.org/data-structure/search-single-element-in-a-sorted-array/" },
   { name: "Search element in a sorted and rotated array/ find pivot where it is rotated", topic: "Binary Search", difficulty: "Medium", problem_link: "https://leetcode.com/problems/search-in-rotated-sorted-array/", video_link: "https://www.youtube.com/watch?v=r3pMQ8-Ad5s&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=64", solution_link: "https://takeuforward.org/data-structure/search-element-in-a-rotated-sorted-array/" },
   { name: "Median of 2 sorted arrays", topic: "Binary Search", difficulty: "Hard", problem_link: "https://leetcode.com/problems/median-of-two-sorted-arrays/", video_link: "https://www.youtube.com/watch?v=NTop3VTjmxk&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=65", solution_link: "" },
-  { name: "Kth element of 2 sorted arrays", topic: "Binary Search", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/kth-element-of-2-sorted-arrays", video_link: "https://www.youtube.com/watch?v=nv7F4PiLUzo&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=66", solution_link: "https://takeuforward.org/data-structure/k-th-element-of-two-sorted-arrays/" },
-  { name: "Allocate Minimum Number of Pages", topic: "Binary Search", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/book-allocation-problem", video_link: "https://www.youtube.com/watch?v=gYmWHvRHu-s&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=69", solution_link: "https://takeuforward.org/data-structure/allocate-minimum-number-of-pages/" },
-  { name: "Aggressive Cows", topic: "Binary Search", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/aggressive-cows", video_link: "https://youtu.be/R_Mfw4ew-Vo", solution_link: "https://takeuforward.org/data-structure/aggressive-cows-detailed-solution/" },
-  { name: "Implement Max Heap", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/implement-max-heap", video_link: "", solution_link: "" },
-  { name: "K-th Largest element in an array", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/k-th-largest-element-in-an-array", video_link: "", solution_link: "https://takeuforward.org/data-structure/kth-largest-smallest-element-in-an-array/" },
-  { name: "Maximum Sum Combination", topic: "Heaps / Priority Queue", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/maximum-sum-combination", video_link: "", solution_link: "https://takeuforward.org/data-structure/maximum-sum-combination" },
+  { name: "Kth element of 2 sorted arrays", topic: "Binary Search", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/k-th-element-of-two-sorted-array1317/1", video_link: "https://www.youtube.com/watch?v=nv7F4PiLUzo&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=66", solution_link: "https://takeuforward.org/data-structure/k-th-element-of-two-sorted-arrays/" },
+  { name: "Allocate Minimum Number of Pages", topic: "Binary Search", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/allocate-minimum-number-of-pages0937/1", video_link: "https://www.youtube.com/watch?v=gYmWHvRHu-s&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=69", solution_link: "https://takeuforward.org/data-structure/allocate-minimum-number-of-pages/" },
+  { name: "Aggressive Cows", topic: "Binary Search", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/aggressive-cows/1", video_link: "https://youtu.be/R_Mfw4ew-Vo", solution_link: "https://takeuforward.org/data-structure/aggressive-cows-detailed-solution/" },
+  { name: "Implement Max Heap", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/operations-on-binary-min-heap/1", video_link: "", solution_link: "" },
+  { name: "K-th Largest element in an array", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://leetcode.com/problems/kth-largest-element-in-an-array/", video_link: "", solution_link: "https://takeuforward.org/data-structure/kth-largest-smallest-element-in-an-array/" },
+  { name: "Maximum Sum Combination", topic: "Heaps / Priority Queue", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/maximum-sum-combination/1", video_link: "", solution_link: "https://takeuforward.org/data-structure/maximum-sum-combination" },
   { name: "Find Median from Data Stream", topic: "Heaps / Priority Queue", difficulty: "Hard", problem_link: "https://leetcode.com/problems/find-median-from-data-stream/", video_link: "", solution_link: "https://takeuforward.org/data-structure/find-median-from-data-stream" },
-  { name: "Merge K Sorted Arrays", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/merge-k-sorted-arrays", video_link: "", solution_link: "" },
+  { name: "Merge K Sorted Arrays", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/merge-k-sorted-arrays/1", video_link: "", solution_link: "" },
   { name: "Top K Frequent Elements", topic: "Heaps / Priority Queue", difficulty: "Medium", problem_link: "https://leetcode.com/problems/top-k-frequent-elements/", video_link: "", solution_link: "https://takeuforward.org/data-structure/top-k-frequent-elements" },
-  { name: "Implement Stack using Arrays", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://takeuforward.org/plus/dsa/problems/implement-stack-using-arrays", video_link: "https://youtu.be/tqQ5fTamIN4?si=ofLt8Zt1ZvhikZ6w", solution_link: "https://takeuforward.org/data-structure/implement-stack-using-array/" },
-  { name: "Implement Queue using Arrays", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://takeuforward.org/plus/dsa/problems/implement-queue-using-arrays", video_link: "https://youtu.be/tqQ5fTamIN4?si=ofLt8Zt1ZvhikZ6w", solution_link: "https://takeuforward.org/data-structure/implement-queue-using-array/" },
+  { name: "Implement Stack using Arrays", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://www.geeksforgeeks.org/problems/implement-stack-using-array/1", video_link: "https://youtu.be/tqQ5fTamIN4?si=ofLt8Zt1ZvhikZ6w", solution_link: "https://takeuforward.org/data-structure/implement-stack-using-array/" },
+  { name: "Implement Queue using Arrays", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://www.geeksforgeeks.org/problems/implement-queue-using-array/1", video_link: "https://youtu.be/tqQ5fTamIN4?si=ofLt8Zt1ZvhikZ6w", solution_link: "https://takeuforward.org/data-structure/implement-queue-using-array/" },
   { name: "Implement Stack using Queue (using single queue)", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://leetcode.com/problems/implement-stack-using-queues/", video_link: "https://youtu.be/tqQ5fTamIN4?si=ofLt8Zt1ZvhikZ6w", solution_link: "https://takeuforward.org/data-structure/implement-stack-using-single-queue" },
   { name: "Implement Queue using Stack", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://leetcode.com/problems/implement-queue-using-stacks/", video_link: "https://youtu.be/tqQ5fTamIN4?si=ofLt8Zt1ZvhikZ6w", solution_link: "https://takeuforward.org/data-structure/implement-queue-using-stack/" },
   { name: "Balanced Paranthesis", topic: "Stacks & Queues", difficulty: "Easy", problem_link: "https://leetcode.com/problems/valid-parentheses/", video_link: "https://youtu.be/xwjS0iZhw4I?si=UoyKpFn4Q3nf5h2R", solution_link: "https://takeuforward.org/data-structure/check-for-balanced-parentheses/" },
   { name: "Next Greater Element", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://leetcode.com/problems/next-greater-element-i/", video_link: "https://youtu.be/e7XQLtOQM3I?si=QdcHpTtx6gAHsext", solution_link: "https://takeuforward.org/data-structure/next-greater-element-using-stack/" },
-  { name: "Sort a Stack", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://www.codingninjas.com/studio/problems/sort-a-stack_985275", video_link: "", solution_link: "https://takeuforward.org/data-structure/sort-a-stack" },
-  { name: "Next Smaller Element", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/next-smaller-element", video_link: "", solution_link: "https://takeuforward.org/data-structure/next-smaller-element" },
-  { name: "LRU Cache", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/lru-cache", video_link: "", solution_link: "https://takeuforward.org/data-structure/program-for-least-recently-used-lru-page-replacement-algorithm" },
+  { name: "Sort a Stack", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/sort-a-stack/1", video_link: "", solution_link: "https://takeuforward.org/data-structure/sort-a-stack" },
+  { name: "Next Smaller Element", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/help-classmates--141631/1", video_link: "", solution_link: "https://takeuforward.org/data-structure/next-smaller-element" },
+  { name: "LRU Cache", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://leetcode.com/problems/lru-cache/", video_link: "", solution_link: "https://takeuforward.org/data-structure/program-for-least-recently-used-lru-page-replacement-algorithm" },
   { name: "LFU Cache", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://leetcode.com/problems/lfu-cache/", video_link: "https://www.youtube.com/watch?v=0PSB9y8ehbk&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=79", solution_link: "https://takeuforward.org/data-structure/lfu-cache" },
   { name: "Largest rectangle in a histogram", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://leetcode.com/problems/largest-rectangle-in-histogram/", video_link: "https://youtu.be/Bzat9vgD0fs?si=DiBlLejXcr6EJoyB", solution_link: "https://takeuforward.org/data-structure/area-of-largest-rectangle-in-histogram/" },
   { name: "Sliding Window Maximum", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://leetcode.com/problems/sliding-window-maximum/", video_link: "https://youtu.be/NwBvene4Imo?si=eU1PY-bcQfk5wdog", solution_link: "https://takeuforward.org/data-structure/sliding-window-maximum/" },
   { name: "Implement Min Stack", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://leetcode.com/problems/min-stack/", video_link: "https://youtu.be/NdDIaH91P0g?si=4_Jbsq5trFvfSdUY", solution_link: "https://takeuforward.org/data-structure/implement-min-stack-o2n-and-on-space-complexity/" },
   { name: "Rotten Oranges", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://leetcode.com/problems/rotting-oranges/", video_link: "https://www.youtube.com/watch?v=yf3oUhkvqA0", solution_link: "https://takeuforward.org/data-structure/rotten-oranges-min-time-to-rot-all-oranges-bfs/" },
   { name: "Stock span problem", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://leetcode.com/problems/online-stock-span/", video_link: "https://youtu.be/eay-zoSRkVc?si=deNNe5i38BOAntha", solution_link: "https://takeuforward.org/data-structure/stock-span-problem" },
-  { name: "Maximum of Minimums for Every Window Size", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/maximum-of-minimums-for-every-window-size", video_link: "", solution_link: "" },
-  { name: "Celebrity Problem", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://leetcode.com/accounts/login/?next=/problems/find-the-celebrity/", video_link: "https://youtu.be/cEadsbTeze4?si=olXYfOs7l-SEn2zl", solution_link: "https://takeuforward.org/data-structure/celebrity-problem" },
+  { name: "Maximum of Minimums for Every Window Size", topic: "Stacks & Queues", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/maximum-of-minimum-for-every-window-size3453/1", video_link: "", solution_link: "" },
+  { name: "Celebrity Problem", topic: "Stacks & Queues", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/the-celebrity-problem/1", video_link: "https://youtu.be/cEadsbTeze4?si=olXYfOs7l-SEn2zl", solution_link: "https://takeuforward.org/data-structure/celebrity-problem" },
   { name: "Reverse every word in a string", topic: "Strings", difficulty: "Medium", problem_link: "https://leetcode.com/problems/reverse-words-in-a-string/", video_link: "", solution_link: "https://takeuforward.org/data-structure/reverse-words-in-a-string/" },
   { name: "Longest Palindrome in a string", topic: "Strings", difficulty: "Medium", problem_link: "https://leetcode.com/problems/longest-palindromic-substring/", video_link: "", solution_link: "" },
   { name: "Roman to Integer", topic: "Strings", difficulty: "Medium", problem_link: "https://leetcode.com/problems/roman-to-integer/", video_link: "", solution_link: "https://takeuforward.org/data-structure/roman-numerals-to-integer" },
   { name: "Implement ATOI/STRSTR", topic: "Strings", difficulty: "Medium", problem_link: "https://leetcode.com/problems/string-to-integer-atoi/", video_link: "", solution_link: "" },
   { name: "Longest Common Prefix", topic: "Strings", difficulty: "Easy", problem_link: "https://leetcode.com/problems/longest-common-prefix/", video_link: "", solution_link: "https://takeuforward.org/data-structure/longest-common-prefix" },
   { name: "Rabin Karp Algorithm", topic: "Strings", difficulty: "Hard", problem_link: "https://leetcode.com/problems/repeated-string-match/discuss/416144/Rabin-Karp-algorithm-C%2B%2B-implementation", video_link: "", solution_link: "" },
-  { name: "Z function", topic: "Strings", difficulty: "Hard", problem_link: "$undefined", video_link: "", solution_link: "" },
-  { name: "KMP Algorithm or LPS array", topic: "Strings", difficulty: "Hard", problem_link: "https://leetcode.com/problems/implement-strstr/", video_link: "", solution_link: "https://takeuforward.org/data-structure/kmp-algorithm-or-lps-array" },
+  { name: "Z function", topic: "Strings", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/search-pattern-z-algorithm--141631/1", video_link: "", solution_link: "" },
+  { name: "KMP Algorithm or LPS array", topic: "Strings", difficulty: "Hard", problem_link: "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/", video_link: "", solution_link: "https://takeuforward.org/data-structure/kmp-algorithm-or-lps-array" },
   { name: "Minimum insertions to make string palindrome", topic: "Strings", difficulty: "Hard", problem_link: "https://leetcode.com/problems/minimum-insertion-steps-to-make-a-string-palindrome/", video_link: "https://www.youtube.com/watch?v=xPBLEj41rFU", solution_link: "https://takeuforward.org/data-structure/minimum-insertions-to-make-string-palindrome-dp-29/" },
   { name: "Valid Anagram", topic: "Strings", difficulty: "Easy", problem_link: "https://leetcode.com/problems/valid-anagram/#:~:text=Given%20two%20strings%20s%20and,the%20original%20letters%20exactly%20once.&text=Constraints%3A,.length%20%3C%3D%205%20*%2010", video_link: "", solution_link: "https://takeuforward.org/data-structure/check-if-two-strings-are-anagrams-of-each-other/" },
   { name: "Count and say", topic: "Strings", difficulty: "Hard", problem_link: "https://leetcode.com/problems/count-and-say/", video_link: "", solution_link: "https://takeuforward.org/data-structure/count-and-say" },
@@ -183,11 +211,11 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Morris Inorder Traversal ", topic: "Trees & BST", difficulty: "Hard", problem_link: "https://leetcode.com/problems/binary-tree-inorder-traversal/", video_link: "https://youtu.be/80Zug6D1_r4", solution_link: "https://takeuforward.org/data-structure/morris-inorder-traversal-of-a-binary-tree/" },
   { name: "Morris Preorder Traversal ", topic: "Trees & BST", difficulty: "Hard", problem_link: "https://leetcode.com/problems/binary-tree-inorder-traversal/", video_link: "https://youtu.be/80Zug6D1_r4", solution_link: "https://takeuforward.org/data-structure/morris-preorder-traversal-of-a-binary-tree/" },
   { name: "Right/Left View of BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/binary-tree-right-side-view/", video_link: "https://youtu.be/KV4mRzTjlAk", solution_link: "https://takeuforward.org/data-structure/right-left-view-of-binary-tree/" },
-  { name: "Bottom view of BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/bottom-view-of-bt", video_link: "https://youtu.be/0FtVY6I4pB8", solution_link: "https://takeuforward.org/data-structure/bottom-view-of-a-binary-tree/" },
-  { name: "Top View of BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/top-view-of-bt", video_link: "https://youtu.be/Et9OCDNvJ78", solution_link: "https://takeuforward.org/data-structure/top-view-of-a-binary-tree/" },
-  { name: "Pre, Post, Inorder in one traversal", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://takeuforward.org/plus/dsa/problems/pre,-post,-inorder-in-one-traversal", video_link: "https://youtu.be/ySp2epYvgTE", solution_link: "https://takeuforward.org/data-structure/preorder-inorder-postorder-traversals-in-one-traversal/" },
+  { name: "Bottom view of BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/bottom-view-of-binary-tree/1", video_link: "https://youtu.be/0FtVY6I4pB8", solution_link: "https://takeuforward.org/data-structure/bottom-view-of-a-binary-tree/" },
+  { name: "Top View of BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/top-view-of-binary-tree/1", video_link: "https://youtu.be/Et9OCDNvJ78", solution_link: "https://takeuforward.org/data-structure/top-view-of-a-binary-tree/" },
+  { name: "Pre, Post, Inorder in one traversal", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://www.naukri.com/code360/problems/tree-traversals_981269", video_link: "https://youtu.be/ySp2epYvgTE", solution_link: "https://takeuforward.org/data-structure/preorder-inorder-postorder-traversals-in-one-traversal/" },
   { name: "Vertical Order Traversal", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree/", video_link: "https://youtu.be/q_a6lpbKJdw", solution_link: "https://takeuforward.org/data-structure/vertical-order-traversal-of-binary-tree/" },
-  { name: "Print root to leaf path in BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/print-root-to-note-path-in-bt", video_link: "https://youtu.be/fmflMqVOC7k", solution_link: "https://takeuforward.org/data-structure/print-root-to-node-path-in-a-binary-tree/" },
+  { name: "Print root to leaf path in BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/binary-tree-paths/", video_link: "https://youtu.be/fmflMqVOC7k", solution_link: "https://takeuforward.org/data-structure/print-root-to-node-path-in-a-binary-tree/" },
   { name: "Maximum Width of BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/maximum-width-of-binary-tree/", video_link: "https://youtu.be/ZbybYvcVLks", solution_link: "https://takeuforward.org/data-structure/maximum-width-of-a-binary-tree/" },
   { name: "Level Order Traversal", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://leetcode.com/problems/binary-tree-level-order-traversal/", video_link: "https://youtu.be/EoAsWbO7sqg", solution_link: "https://takeuforward.org/data-structure/level-order-traversal-of-a-binary-tree/" },
   { name: "Maximum Depth in BT", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/maximum-depth-of-binary-tree/", video_link: "https://youtu.be/eD3tmO66aBA", solution_link: "https://takeuforward.org/data-structure/maximum-depth-of-a-binary-tree/" },
@@ -203,7 +231,7 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Symmetric Binary Tree", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/symmetric-tree/", video_link: "https://www.youtube.com/watch?v=nKggNAiEpBE", solution_link: "https://takeuforward.org/data-structure/check-for-symmetrical-binary-tree/" },
   { name: "Flatten Binary Tree to Linked List", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/flatten-binary-tree-to-linked-list/", video_link: "https://youtu.be/sWf7k1x9XR4", solution_link: "https://takeuforward.org/data-structure/flatten-binary-tree-to-linked-list/" },
   { name: "Check for symmetrical BTs", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/symmetric-tree/", video_link: "https://www.youtube.com/watch?v=nKggNAiEpBE", solution_link: "https://takeuforward.org/data-structure/check-for-symmetrical-binary-tree/" },
-  { name: "Children Sum Property in Binary Tree", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/children-sum-property-in-binary-tree", video_link: "https://youtu.be/fnmisPM6cVo", solution_link: "https://takeuforward.org/data-structure/check-for-children-sum-property-in-a-binary-tree/" },
+  { name: "Children Sum Property in Binary Tree", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/children-sum-parent/1", video_link: "https://youtu.be/fnmisPM6cVo", solution_link: "https://takeuforward.org/data-structure/check-for-children-sum-property-in-a-binary-tree/" },
   { name: "Populating Next Right Pointers in Each Node", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/populating-next-right-pointers-in-each-node/", video_link: "", solution_link: "" },
   { name: "Search in BST", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://leetcode.com/problems/search-in-a-binary-search-tree/", video_link: "https://youtu.be/KcNt6v_56cc", solution_link: "https://takeuforward.org/data-structure/search-in-a-binary-search-tree-2/" },
   { name: "Construct BST from given keys", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/", video_link: "", solution_link: "" },
@@ -211,8 +239,8 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Check if a tree is a BST or not", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/validate-binary-search-tree/", video_link: "https://youtu.be/f-sj7I5oXEI", solution_link: "" },
   { name: "LCA in BST", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/", video_link: "https://youtu.be/cX_kPV_foZc", solution_link: "" },
   { name: "Inorder successor and predecessor in BST", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/inorder-successor-in-bst/", video_link: "https://youtu.be/SXKAD2svfmI", solution_link: "https://takeuforward.org/data-structure/inorder-successorpredecessor-in-bst" },
-  { name: "Floor in a BST", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://takeuforward.org/plus/dsa/problems/floor-and-ceil-in-a-bst", video_link: "https://www.youtube.com/watch?v=xm_W1ub-K-w&list=PLgUwDviBIf0q8Hkd7bK2Bpryj2xVJk8Vk&index=43", solution_link: "" },
-  { name: "Ceil in a BST", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://takeuforward.org/plus/dsa/problems/floor-and-ceil-in-a-bst", video_link: "https://www.youtube.com/watch?v=KSsk8AhdOZA&list=PLgUwDviBIf0q8Hkd7bK2Bpryj2xVJk8Vk&index=42", solution_link: "" },
+  { name: "Floor in a BST", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://www.geeksforgeeks.org/problems/floor-in-bst/1", video_link: "https://www.youtube.com/watch?v=xm_W1ub-K-w&list=PLgUwDviBIf0q8Hkd7bK2Bpryj2xVJk8Vk&index=43", solution_link: "" },
+  { name: "Ceil in a BST", topic: "Trees & BST", difficulty: "Easy", problem_link: "https://www.geeksforgeeks.org/problems/implementing-ceil-in-bst/1", video_link: "https://www.youtube.com/watch?v=KSsk8AhdOZA&list=PLgUwDviBIf0q8Hkd7bK2Bpryj2xVJk8Vk&index=42", solution_link: "" },
   { name: "Find K-th smallest element in BST", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/kth-smallest-element-in-a-bst/", video_link: "https://youtu.be/9TJYWh0adfk", solution_link: "https://takeuforward.org/data-structure/kth-largest-smallest-element-in-binary-search-tree/" },
   { name: "Kth Smallest and Largest element in BST", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/kth-smallest-element-in-a-bst/", video_link: "https://youtu.be/9TJYWh0adfk", solution_link: "https://takeuforward.org/data-structure/kth-largest-smallest-element-in-binary-search-tree/" },
   { name: "Two sum in BST", topic: "Trees & BST", difficulty: "Hard", problem_link: "https://leetcode.com/problems/two-sum-iv-input-is-a-bst/", video_link: "https://youtu.be/ssL3sHwPeb4", solution_link: "https://takeuforward.org/data-structure/two-sum-in-bst-check-if-there-exists-a-pair-with-sum-k" },
@@ -222,47 +250,47 @@ export const STRIVER_SHEET_PROBLEMS: StriverProblem[] = [
   { name: "Binary Tree to Doubly Linked List", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/flatten-binary-tree-to-linked-list/", video_link: "https://www.youtube.com/watch?v=sWf7k1x9XR4&list=PLgUwDviBIf0q8Hkd7bK2Bpryj2xVJk8Vk&index=39", solution_link: "" },
   { name: "Find Median in a Stream", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/find-median-from-data-stream/", video_link: "", solution_link: "" },
   { name: "Kth largest element in a stream of running integers", topic: "Trees & BST", difficulty: "Hard", problem_link: "https://leetcode.com/problems/kth-largest-element-in-a-stream/#:~:text=Implement%20KthLargest%20class%3A,largest%20element%20in%20the%20stream.", video_link: "", solution_link: "https://takeuforward.org/data-structure/kth-largest-element-in-a-stream-of-running-integers" },
-  { name: "Distinct Numbers in Each Subarray", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/distinct-numbers-in-each-subarray", video_link: "", solution_link: "" },
+  { name: "Distinct Numbers in Each Subarray", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/count-distinct-elements-in-every-window/1", video_link: "", solution_link: "" },
   { name: "K-th largest element in an unsorted array.", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/kth-largest-element-in-an-array/", video_link: "", solution_link: "" },
   { name: "Flood-fill Algorithm", topic: "Trees & BST", difficulty: "Medium", problem_link: "https://leetcode.com/problems/flood-fill/", video_link: "", solution_link: "" },
   { name: "Clone Graph", topic: "Graphs", difficulty: "Medium", problem_link: "https://leetcode.com/problems/clone-graph/", video_link: "", solution_link: "" },
-  { name: "DFS", topic: "Graphs", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/traversal-techniques", video_link: "https://youtu.be/Qzf1a--rhp8", solution_link: "https://takeuforward.org/data-structure/depth-first-search-dfs/" },
-  { name: "Traversal Techniques", topic: "Graphs", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/traversal-techniques", video_link: "https://youtu.be/Qzf1a--rhp8", solution_link: "https://takeuforward.org/data-structure/depth-first-search-dfs/" },
+  { name: "DFS", topic: "Graphs", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/depth-first-traversal-for-a-graph/1", video_link: "https://youtu.be/Qzf1a--rhp8", solution_link: "https://takeuforward.org/data-structure/depth-first-search-dfs/" },
+  { name: "Traversal Techniques", topic: "Graphs", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/bfs-traversal-of-graph/1", video_link: "https://youtu.be/Qzf1a--rhp8", solution_link: "https://takeuforward.org/data-structure/depth-first-search-dfs/" },
   { name: "Detect A cycle in Undirected Graph using BFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/course-schedule/", video_link: "https://youtu.be/BPlrALf1LDU", solution_link: "https://takeuforward.org/data-structure/detect-cycle-in-an-undirected-graph-using-bfs/" },
   { name: "Detect A cycle in Undirected Graph using DFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/course-schedule/", video_link: "https://youtu.be/zQ3zgFypzX4", solution_link: "https://takeuforward.org/data-structure/detect-cycle-in-an-undirected-graph-using-dfs/" },
   { name: "Detect A cycle in a Directed Graph using DFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/course-schedule/", video_link: "https://www.youtube.com/watch?v=uzVUw90ZFIg&list=PLgUwDviBIf0rGEWe64KWas0Nryn7SCRWw&index=12", solution_link: "https://takeuforward.org/data-structure/detect-a-cycle-in-directed-graph-topological-sort-kahns-algorithm-g-23/" },
   { name: "Detect A cycle in a Directed Graph using BFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/course-schedule/", video_link: "https://www.youtube.com/watch?v=iTBaI90lpDQ&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=23", solution_link: "" },
-  { name: "Topological Sort BFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/topological-sort-or-kahns-algorithm", video_link: "https://www.youtube.com/watch?v=73sneFXuTEg&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=22", solution_link: "https://takeuforward.org/data-structure/topological-sort-bfs/" },
-  { name: "Topological Sort DFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/topological-sort-or-kahns-algorithm", video_link: "https://www.youtube.com/watch?v=5lZ0iJMrUMk&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=22", solution_link: "https://takeuforward.org/data-structure/topological-sort-using-dfs/" },
+  { name: "Topological Sort BFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/topological-sort/1", video_link: "https://www.youtube.com/watch?v=73sneFXuTEg&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=22", solution_link: "https://takeuforward.org/data-structure/topological-sort-bfs/" },
+  { name: "Topological Sort DFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/topological-sort/1", video_link: "https://www.youtube.com/watch?v=5lZ0iJMrUMk&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=22", solution_link: "https://takeuforward.org/data-structure/topological-sort-using-dfs/" },
   { name: "Number of islands(Do in Grid and Graph Both)", topic: "Graphs", difficulty: "Medium", problem_link: "https://leetcode.com/problems/number-of-islands/", video_link: "https://www.youtube.com/watch?v=muncqlKJrH0&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=8", solution_link: "https://takeuforward.org/data-structure/number-of-distinct-islands/" },
   { name: "Bipartite graph", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/is-graph-bipartite/", video_link: "https://youtu.be/KG5YFfR0j8A", solution_link: "https://takeuforward.org/graph/bipartite-graph-dfs-implementation/" },
   { name: "Bipartite Check using DFS", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/is-graph-bipartite/", video_link: "https://www.youtube.com/watch?v=KG5YFfR0j8A&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=18", solution_link: "https://takeuforward.org/graph/bipartite-graph-dfs-implementation/" },
-  { name: "Strongly Connected Component(using KosaRaju\u0393\u00c7\u00d6s algo)", topic: "Graphs", difficulty: "Hard", problem_link: "https://leetcode.com/problems/maximum-number-of-non-overlapping-substrings/discuss/766485/kosaraju-algorithm-on", video_link: "https://www.youtube.com/watch?v=V8qIqJxCioo&list=PLgUwDviBIf0rGEWe64KWas0Nryn7SCRWw&index=27", solution_link: "https://takeuforward.org/graph/strongly-connected-components-kosarajus-algorithm-g-54/" },
-  { name: "Dijkstra's algorithm", topic: "Graphs", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/dijkstra's-algorithm", video_link: "https://www.youtube.com/watch?v=rp1SMw7HSO8&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=35", solution_link: "https://takeuforward.org/data-structure/dijkstras-algorithm-using-priority-queue-g-32/" },
-  { name: "Bellman ford algorithm", topic: "Graphs", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/bellman-ford-algorithm", video_link: "https://youtu.be/0vVofAhAYjc", solution_link: "https://takeuforward.org/data-structure/bellman-ford-algorithm-g-41/" },
-  { name: "Floyd Warshall Algorithm", topic: "Graphs", difficulty: "Hard", problem_link: "https://practice.geeksforgeeks.org/problems/implementing-floyd-warshall2042/1", video_link: "https://www.youtube.com/watch?v=YbY8cVwWAvw&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=42", solution_link: "https://takeuforward.org/data-structure/floyd-warshall-algorithm-g-42/" },
-  { name: "MST using Prim's Algo", topic: "Graphs", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/find-the-mst-weight", video_link: "https://www.youtube.com/watch?v=mJcZjjKzeqk&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=44", solution_link: "https://takeuforward.org/data-structure/prims-algorithm-minimum-spanning-tree-c-and-java-g-45/" },
-  { name: "MST using Kruskal\u0393\u00c7\u00d6s Algo", topic: "Graphs", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/find-the-mst-weight", video_link: "https://www.youtube.com/watch?v=1KRmCzBl_mQ&list=PLgUwDviBIf0rGEWe64KWas0Nryn7SCRWw&index=24", solution_link: "https://takeuforward.org/data-structure/kruskals-algorithm-minimum-spanning-tree-g-47/" },
+  { name: "Strongly Connected Component (using Kosaraju's algo)", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/strongly-connected-components-kosarajus-algo/1", video_link: "https://www.youtube.com/watch?v=V8qIqJxCioo&list=PLgUwDviBIf0rGEWe64KWas0Nryn7SCRWw&index=27", solution_link: "https://takeuforward.org/graph/strongly-connected-components-kosarajus-algorithm-g-54/" },
+  { name: "Dijkstra's algorithm", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/implementing-dijkstra-set-1-adjacency-matrix/1", video_link: "https://www.youtube.com/watch?v=rp1SMw7HSO8&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=35", solution_link: "https://takeuforward.org/data-structure/dijkstras-algorithm-using-priority-queue-g-32/" },
+  { name: "Bellman ford algorithm", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/distance-from-the-source-bellman-ford-algorithm/1", video_link: "https://youtu.be/0vVofAhAYjc", solution_link: "https://takeuforward.org/data-structure/bellman-ford-algorithm-g-41/" },
+  { name: "Floyd Warshall Algorithm", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/implementing-floyd-warshall2042/1", video_link: "https://www.youtube.com/watch?v=YbY8cVwWAvw&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=42", solution_link: "https://takeuforward.org/data-structure/floyd-warshall-algorithm-g-42/" },
+  { name: "MST using Prim's Algo", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1", video_link: "https://www.youtube.com/watch?v=mJcZjjKzeqk&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn&index=44", solution_link: "https://takeuforward.org/data-structure/prims-algorithm-minimum-spanning-tree-c-and-java-g-45/" },
+  { name: "MST using Kruskal's Algo", topic: "Graphs", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/minimum-spanning-tree/1", video_link: "https://www.youtube.com/watch?v=1KRmCzBl_mQ&list=PLgUwDviBIf0rGEWe64KWas0Nryn7SCRWw&index=24", solution_link: "https://takeuforward.org/data-structure/kruskals-algorithm-minimum-spanning-tree-g-47/" },
   { name: "Max Product Subarray", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://leetcode.com/problems/maximum-product-subarray/", video_link: "", solution_link: "https://takeuforward.org/data-structure/maximum-product-subarray-in-an-array/" },
-  { name: "Longest Increasing Subsequence", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/longest-increasing-subsequence", video_link: "https://youtu.be/on2hvxBXJH4", solution_link: "https://takeuforward.org/data-structure/longest-increasing-subsequence-binary-search-dp-43/" },
-  { name: "Longest common subsequence", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/longest-common-subsequence", video_link: "https://youtu.be/-zI4mrF2Pb4", solution_link: "https://takeuforward.org/data-structure/print-longest-common-subsequence-dp-26/" },
-  { name: "0 and 1 Knapsack", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/0-and-1-knapsack", video_link: "https://youtu.be/GqOmJHQZivw", solution_link: "https://takeuforward.org/data-structure/0-1-knapsack-dp-19/" },
+  { name: "Longest Increasing Subsequence", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://leetcode.com/problems/longest-increasing-subsequence/", video_link: "https://youtu.be/on2hvxBXJH4", solution_link: "https://takeuforward.org/data-structure/longest-increasing-subsequence-binary-search-dp-43/" },
+  { name: "Longest common subsequence", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://leetcode.com/problems/longest-common-subsequence/", video_link: "https://youtu.be/-zI4mrF2Pb4", solution_link: "https://takeuforward.org/data-structure/print-longest-common-subsequence-dp-26/" },
+  { name: "0 and 1 Knapsack", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/0-1-knapsack-problem0945/1", video_link: "https://youtu.be/GqOmJHQZivw", solution_link: "https://takeuforward.org/data-structure/0-1-knapsack-dp-19/" },
   { name: "Edit distance", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://leetcode.com/problems/edit-distance/", video_link: "https://youtu.be/fJaKO8FbDdo", solution_link: "https://takeuforward.org/data-structure/edit-distance-dp-33/" },
-  { name: "Maximum Sum Increasing Subsequence", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/maximum-sum-increasing-subsequence", video_link: "", solution_link: "" },
-  { name: "Matrix chain multiplication", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/matrix-chain-multiplication", video_link: "https://youtu.be/vRVfmbCFW7Y", solution_link: "https://takeuforward.org/dynamic-programming/matrix-chain-multiplication-dp-48/" },
+  { name: "Maximum Sum Increasing Subsequence", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/maximum-sum-increasing-subsequence4749/1", video_link: "", solution_link: "" },
+  { name: "Matrix chain multiplication", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/matrix-chain-multiplication0303/1", video_link: "https://youtu.be/vRVfmbCFW7Y", solution_link: "https://takeuforward.org/dynamic-programming/matrix-chain-multiplication-dp-48/" },
   { name: "Minimum sum path in the matrix, (count paths and similar type do, also backtrack to find the Minimum path)", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://leetcode.com/problems/minimum-path-sum/", video_link: "https://youtu.be/_rgTlyky1uQ", solution_link: "https://takeuforward.org/data-structure/minimum-path-sum-in-a-grid-dp-10/" },
-  { name: "Coin change II", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://leetcode.com/problems/coin-change-2/", video_link: "https://www.youtube.com/watch?v=HgyouUi11zk", solution_link: "https://takeuforward.org/data-structure/coin-change-2-dp-22/" },
-  { name: "Subset sum equals to target", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/subset-sum-equals-to-target", video_link: "https://www.youtube.com/watch?v=rYkfBRtMJr8&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=52", solution_link: "https://takeuforward.org/data-structure/subset-sum-sum-of-all-subsets/" },
-  { name: "Rod cutting problem", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/rod-cutting-problem", video_link: "https://youtu.be/mO8XpGoJwuo", solution_link: "https://takeuforward.org/data-structure/rod-cutting-problem-dp-24/" },
-  { name: "Super Egg Drop", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/super-egg-drop", video_link: "", solution_link: "" },
-  { name: "Word Break", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/word-break", video_link: "", solution_link: "" },
-  { name: "Palindrome Partitioning (MCM Variation)", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/palindrome-partitioning", video_link: "https://youtu.be/_H8V5hJUGd0", solution_link: "" },
-  { name: "Maximum Profit in Job Scheduling", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/maximum-profit-in-job-scheduling", video_link: "", solution_link: "" },
+  { name: "Coin change II", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://leetcode.com/problems/coin-change-ii/", video_link: "https://www.youtube.com/watch?v=HgyouUi11zk", solution_link: "https://takeuforward.org/data-structure/coin-change-2-dp-22/" },
+  { name: "Subset sum equals to target", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/subset-sum-problem2014/1", video_link: "https://www.youtube.com/watch?v=rYkfBRtMJr8&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=52", solution_link: "https://takeuforward.org/data-structure/subset-sum-sum-of-all-subsets/" },
+  { name: "Rod cutting problem", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/rod-cutting0840/1", video_link: "https://youtu.be/mO8XpGoJwuo", solution_link: "https://takeuforward.org/data-structure/rod-cutting-problem-dp-24/" },
+  { name: "Super Egg Drop", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://leetcode.com/problems/super-egg-drop/", video_link: "", solution_link: "" },
+  { name: "Word Break", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://leetcode.com/problems/word-break/", video_link: "", solution_link: "" },
+  { name: "Palindrome Partitioning (MCM Variation)", topic: "Dynamic Programming", difficulty: "Hard", problem_link: "https://leetcode.com/problems/palindrome-partitioning-ii/", video_link: "https://youtu.be/_H8V5hJUGd0", solution_link: "" },
+  { name: "Maximum Profit in Job Scheduling", topic: "Dynamic Programming", difficulty: "Medium", problem_link: "https://leetcode.com/problems/maximum-profit-in-job-scheduling/", video_link: "", solution_link: "" },
   { name: "Trie Implementation and Operations", topic: "Trie", difficulty: "Hard", problem_link: "https://leetcode.com/problems/implement-trie-prefix-tree/", video_link: "https://www.youtube.com/watch?v=dBGUmUQhjaM&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp", solution_link: "https://takeuforward.org/data-structure/implement-trie-1/" },
-  { name: "Trie Implementation and Advanced Operations", topic: "Trie", difficulty: "Hard", problem_link: "https://takeuforward.org/plus/dsa/problems/trie-implementation-and-advanced-operations", video_link: "", solution_link: "https://takeuforward.org/data-structure/implement-trie-ii/" },
-  { name: "Longest Word with All Prefixes", topic: "Trie", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/longest-word-with-all-prefixes", video_link: "https://www.youtube.com/watch?v=AWnBa91lThI&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp&index=3", solution_link: "" },
-  { name: "Number of distinct substrings in a string", topic: "Trie", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/number-of-distinct-substrings-in-a-string", video_link: "https://www.youtube.com/watch?v=RV0QeTyHZxo&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp&index=4", solution_link: "https://takeuforward.org/data-structure/number-of-distinct-substrings-in-a-string-using-trie/" },
-  { name: "Power Set (this is very important)", topic: "Trie", difficulty: "Medium", problem_link: "https://takeuforward.org/plus/dsa/problems/power-set", video_link: "https://www.youtube.com/watch?v=b7AYbpM5YrE&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=67", solution_link: "https://takeuforward.org/data-structure/power-set-print-all-the-possible-subsequences-of-the-string/" },
+  { name: "Trie Implementation and Advanced Operations", topic: "Trie", difficulty: "Hard", problem_link: "https://www.geeksforgeeks.org/problems/trie-insert-and-search/1", video_link: "", solution_link: "https://takeuforward.org/data-structure/implement-trie-ii/" },
+  { name: "Longest Word with All Prefixes", topic: "Trie", difficulty: "Medium", problem_link: "https://leetcode.com/problems/longest-word-in-dictionary/", video_link: "https://www.youtube.com/watch?v=AWnBa91lThI&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp&index=3", solution_link: "" },
+  { name: "Number of distinct substrings in a string", topic: "Trie", difficulty: "Medium", problem_link: "https://www.geeksforgeeks.org/problems/count-of-distinct-substrings/1", video_link: "https://www.youtube.com/watch?v=RV0QeTyHZxo&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp&index=4", solution_link: "https://takeuforward.org/data-structure/number-of-distinct-substrings-in-a-string-using-trie/" },
+  { name: "Power Set (this is very important)", topic: "Trie", difficulty: "Medium", problem_link: "https://leetcode.com/problems/subsets/", video_link: "https://www.youtube.com/watch?v=b7AYbpM5YrE&list=PLgUwDviBIf0p4ozDR_kJJkONnb1wdx2Ma&index=67", solution_link: "https://takeuforward.org/data-structure/power-set-print-all-the-possible-subsequences-of-the-string/" },
   { name: "Maximum XOR of two numbers in an array", topic: "Trie", difficulty: "Hard", problem_link: "https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array/", video_link: "https://www.youtube.com/watch?v=EIhAwfHubE8&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp&index=6", solution_link: "https://takeuforward.org/data-structure/maximum-xor-of-two-numbers-in-an-array/" },
   { name: "Maximum Xor with an element from an array", topic: "Trie", difficulty: "Hard", problem_link: "https://leetcode.com/problems/maximum-xor-with-an-element-from-array/", video_link: "https://www.youtube.com/watch?v=Q8LhG9Pi5KM&list=PLgUwDviBIf0pcIDCZnxhv0LkHf5KzG9zp&index=7", solution_link: "https://takeuforward.org/trie/maximum-xor-queries-trie/" }
 ];
@@ -275,14 +303,23 @@ export default function DsaTracker() {
   const [filterTopic, setFilterTopic] = useState<string>('All');
   const [filterOpen, setFilterOpen] = useState(false);
   
-  // SDE Sheet tab states
-  const [activeTab, setActiveTab] = useState<'my-tracker' | 'striver-sheet'>('my-tracker');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab = (tabParam === 'striver-sheet' || tabParam === 'neetcode-150' || tabParam === 'my-tracker')
+    ? tabParam
+    : 'my-tracker';
+
+  const [activeTab, setActiveTab] = useState<'my-tracker' | 'striver-sheet' | 'neetcode-150'>(initialTab);
 
   // Spaced Repetition states
   const [activeProblemId, setActiveProblemId] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<Record<string, DsaAttempt[]>>({});
   const [loadingAttempts, setLoadingAttempts] = useState<Record<string, boolean>>({});
   const [judgingId, setJudgingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSearchParams({ tab: activeTab });
+  }, [activeTab, setSearchParams]);
 
   useEffect(() => {
     async function load() {
@@ -582,6 +619,51 @@ export default function DsaTracker() {
     alert("Striver SDE Sheet progress successfully reset!");
   }
 
+  async function resetNeetcodeSheet() {
+    if (!user) return;
+    const neetcodeNames = new Set(NEETCODE_150_PROBLEMS.map(p => p.name.toLowerCase()));
+    const problemsToDelete = problems.filter(p => neetcodeNames.has(p.problem_name.toLowerCase()));
+    
+    if (problemsToDelete.length === 0) {
+      alert("No NeetCode 150 problems have been tracked yet.");
+      return;
+    }
+
+    const confirmReset = window.confirm(
+      `Are you sure you want to reset your NeetCode 150 progress?\n\nThis will delete all ${problemsToDelete.length} tracked NeetCode problems and their attempts, allowing you to start fresh.`
+    );
+    if (!confirmReset) return;
+
+    const idsToDelete = problemsToDelete.map(p => p.id);
+    
+    // Delete in Supabase
+    const { error } = await supabase
+      .from('dsa_tracker')
+      .delete()
+      .in('id', idsToDelete);
+
+    if (error) {
+      alert("Failed to reset progress: " + error.message);
+      return;
+    }
+
+    // Update local state
+    const updatedList = problems.filter(p => !idsToDelete.includes(p.id));
+    setProblems(updatedList);
+    await syncOverallMetrics(updatedList);
+    
+    // Clear attempts cache
+    setAttempts(prev => {
+      const copy = { ...prev };
+      idsToDelete.forEach(id => {
+        delete copy[id];
+      });
+      return copy;
+    });
+
+    alert("NeetCode 150 progress successfully reset!");
+  }
+
   const solved = problems.filter((p) => p.status === 'Solved').length;
   const pct = problems.length > 0 ? Math.round((solved / problems.length) * 100) : 0;
 
@@ -595,13 +677,17 @@ export default function DsaTracker() {
     .map((p) => p.topic)
     .filter((t) => !TOPIC_SET.has(t))
     .filter((t, i, arr) => arr.indexOf(t) === i);
-  const allFilterTopics = [...TOPICS, ...customTopics];
+  const allFilterTopics = activeTab === 'neetcode-150' 
+    ? [...NEETCODE_TOPICS] 
+    : [...TOPICS, ...customTopics];
 
   const topicCount = (t: string) => {
     if (activeTab === 'my-tracker') {
       return problems.filter((p) => p.topic === t).length;
-    } else {
+    } else if (activeTab === 'striver-sheet') {
       return STRIVER_SHEET_PROBLEMS.filter((sp) => sp.topic === t).length;
+    } else {
+      return NEETCODE_150_PROBLEMS.filter((np) => np.topic === t).length;
     }
   };
 
@@ -615,6 +701,17 @@ export default function DsaTracker() {
     return matchTopic;
   });
 
+  const filteredNeetcodeProblems = NEETCODE_150_PROBLEMS.filter((np) => {
+    const matchTopic = filterTopic === 'All' || np.topic === filterTopic;
+    return matchTopic;
+  });
+
+  const striverSolved = problems.filter(p => p.status === 'Solved' && STRIVER_SHEET_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())).length;
+  const striverPct = STRIVER_SHEET_PROBLEMS.length > 0 ? Math.round((striverSolved / STRIVER_SHEET_PROBLEMS.length) * 100) : 0;
+
+  const neetcodeSolved = problems.filter(p => p.status === 'Solved' && NEETCODE_150_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())).length;
+  const neetcodePct = NEETCODE_150_PROBLEMS.length > 0 ? Math.round((neetcodeSolved / NEETCODE_150_PROBLEMS.length) * 100) : 0;
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -626,7 +723,10 @@ export default function DsaTracker() {
         {/* Tab Switcher */}
         <div className="flex items-center gap-1.5 bg-ink-900 border border-ink-800 p-1 rounded-xl shrink-0 self-start sm:self-auto">
           <button
-            onClick={() => setActiveTab('my-tracker')}
+            onClick={() => {
+              setActiveTab('my-tracker');
+              setFilterTopic('All');
+            }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'my-tracker'
                 ? 'bg-brand-600 text-white shadow-sm'
@@ -636,7 +736,10 @@ export default function DsaTracker() {
             <BookOpen className="w-3.5 h-3.5" /> My Tracker
           </button>
           <button
-            onClick={() => setActiveTab('striver-sheet')}
+            onClick={() => {
+              setActiveTab('striver-sheet');
+              setFilterTopic('All');
+            }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'striver-sheet'
                 ? 'bg-brand-600 text-white shadow-sm'
@@ -644,6 +747,19 @@ export default function DsaTracker() {
             }`}
           >
             <Layers className="w-3.5 h-3.5" /> Striver SDE Sheet
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('neetcode-150');
+              setFilterTopic('All');
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'neetcode-150'
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'text-slate-450 hover:text-slate-200'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" /> NeetCode 150
           </button>
         </div>
       </div>
@@ -662,24 +778,30 @@ export default function DsaTracker() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">
-                {activeTab === 'my-tracker' ? 'Problem Checklist' : 'Striver SDE Sheet'}
+                {activeTab === 'my-tracker' 
+                  ? 'Problem Checklist' 
+                  : activeTab === 'striver-sheet' 
+                    ? 'Striver SDE Sheet' 
+                    : 'NeetCode 150'}
               </h2>
               <p className="text-sm text-slate-505">
                 {activeTab === 'my-tracker'
                   ? 'Log attempts to unlock visual optimization comparisons'
-                  : 'Pre-curated sheet by Striver containing top interview questions'}
+                  : activeTab === 'striver-sheet'
+                    ? 'Pre-curated sheet by Striver containing top interview questions'
+                    : 'Pre-curated sheet by NeetCode containing top interview questions'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4 self-end sm:self-auto">
-            {activeTab === 'my-tracker' ? (
+            {activeTab === 'my-tracker' && (
               <ProgressRing pct={pct} solved={solved} total={problems.length} />
-            ) : (
-              <ProgressRing
-                pct={Math.round((problems.filter(p => p.status === 'Solved' && STRIVER_SHEET_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())).length / STRIVER_SHEET_PROBLEMS.length) * 100)}
-                solved={problems.filter(p => p.status === 'Solved' && STRIVER_SHEET_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())).length}
-                total={STRIVER_SHEET_PROBLEMS.length}
-              />
+            )}
+            {activeTab === 'striver-sheet' && (
+              <ProgressRing pct={striverPct} solved={striverSolved} total={STRIVER_SHEET_PROBLEMS.length} />
+            )}
+            {activeTab === 'neetcode-150' && (
+              <ProgressRing pct={neetcodePct} solved={neetcodeSolved} total={NEETCODE_150_PROBLEMS.length} />
             )}
             
             {activeTab === 'my-tracker' && (
@@ -694,6 +816,15 @@ export default function DsaTracker() {
             {activeTab === 'striver-sheet' && (
               <button
                 onClick={resetStriverSheet}
+                className="flex items-center gap-1.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 text-xs font-bold px-3.5 py-2 rounded-lg transition-colors shrink-0"
+              >
+                Reset Sheet
+              </button>
+            )}
+
+            {activeTab === 'neetcode-150' && (
+              <button
+                onClick={resetNeetcodeSheet}
                 className="flex items-center gap-1.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 text-xs font-bold px-3.5 py-2 rounded-lg transition-colors shrink-0"
               >
                 Reset Sheet
@@ -748,7 +879,11 @@ export default function DsaTracker() {
               {filterTopic === 'All' ? 'All Topics' : filterTopic}
               <span className="text-xs text-slate-505">
                 ({filterTopic === 'All'
-                  ? (activeTab === 'my-tracker' ? problems.length : STRIVER_SHEET_PROBLEMS.length)
+                  ? (activeTab === 'my-tracker' 
+                      ? problems.length 
+                      : activeTab === 'striver-sheet' 
+                        ? STRIVER_SHEET_PROBLEMS.length 
+                        : NEETCODE_150_PROBLEMS.length)
                   : topicCount(filterTopic)})
               </span>
             </span>
@@ -758,7 +893,13 @@ export default function DsaTracker() {
             <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-ink-800 border border-ink-700 rounded-lg shadow-xl py-1 max-h-72 overflow-y-auto font-sans animate-fadeIn">
               <FilterOption
                 label="All Topics"
-                count={activeTab === 'my-tracker' ? problems.length : STRIVER_SHEET_PROBLEMS.length}
+                count={
+                  activeTab === 'my-tracker' 
+                    ? problems.length 
+                    : activeTab === 'striver-sheet' 
+                      ? STRIVER_SHEET_PROBLEMS.length 
+                      : NEETCODE_150_PROBLEMS.length
+                }
                 active={filterTopic === 'All'}
                 onClick={() => { setFilterTopic('All'); setFilterOpen(false); }}
               />
@@ -909,6 +1050,103 @@ export default function DsaTracker() {
                               difficulty: sp.difficulty,
                               solution_link: '',
                               problem_link: sp.problem_link
+                            })}
+                            className="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Track Progress
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {isExpanded && tracked && (
+                      <div className="border-t border-ink-800 bg-ink-950/20">
+                        <DsaAttemptsDrawer
+                          attempts={attempts[tracked.id] ?? []}
+                          loading={loadingAttempts[tracked.id] ?? false}
+                          judging={judgingId === tracked.id}
+                          onAddAttempt={(att) => addAttempt(tracked.id, att)}
+                          onRunJudge={() => runJudge(tracked)}
+                          aiJudgment={tracked.ai_judgment}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {/* NEETCODE 150 VIEW */}
+        {activeTab === 'neetcode-150' && (
+          filteredNeetcodeProblems.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-sm text-slate-505">No questions found in this category.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5 animate-fadeIn">
+              {filteredNeetcodeProblems.map((np, index) => {
+                // Find if this problem has been added to tracker
+                const tracked = problems.find(p => p.problem_name.toLowerCase() === np.name.toLowerCase());
+                const isExpanded = tracked ? activeProblemId === tracked.id : false;
+
+                return (
+                  <div key={index} className={`rounded-xl border border-ink-700/30 bg-ink-950/10 relative z-10 hover:z-20 focus-within:z-30 ${isExpanded ? 'z-20' : ''}`}>
+                    {tracked ? (
+                      <DsaRow
+                         problem={tracked}
+                         showTopic={filterTopic === 'All' || customTopics.length > 0}
+                         onCycle={() => cycleStatus(tracked.id, tracked.status)}
+                         onSaveLink={(link) => saveLink(tracked.id, link)}
+                         onScheduleReattempt={(days) => scheduleReattempt(tracked.id, days)}
+                         onDelete={() => deleteProblem(tracked.id)}
+                         onExpand={() => toggleExpand(tracked.id)}
+                      />
+                    ) : (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-ink-800/20 hover:bg-ink-800/30 transition-colors rounded-xl">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <Circle className="w-4 h-4 text-slate-650 shrink-0 select-none" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold truncate text-white">
+                              {np.name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${DIFF_META[np.difficulty]}`}>
+                                {np.difficulty}
+                              </span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-300 uppercase tracking-wider">
+                                {np.topic}
+                              </span>
+                              <a
+                                href={np.problem_link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-1 text-[11px] text-sky-400 hover:text-sky-300 truncate max-w-[140px] font-medium"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Practice Link
+                              </a>
+                              {np.video_link && (
+                                <a
+                                  href={np.video_link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex items-center gap-1 text-[11px] text-rose-455 hover:text-rose-355 shrink-0 font-medium"
+                                >
+                                  <Play className="w-3 h-3 text-rose-500 fill-rose-500/20" /> Video
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="shrink-0 ml-7 sm:ml-4">
+                          <button
+                            onClick={() => addProblem({
+                              problem_name: np.name,
+                              topic: np.topic,
+                              difficulty: np.difficulty,
+                              solution_link: '',
+                              problem_link: np.problem_link
                             })}
                             className="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0"
                           >

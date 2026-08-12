@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { createPortal } from 'react-dom';
 
 interface Note {
   id: string;
@@ -241,6 +242,18 @@ export default function NotesGenerator() {
   const editorRef = useRef<HTMLDivElement>(null);
   const activeNote = notes.find((n) => n.id === activeId) ?? null;
 
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<'documents' | 'note' | 'aitools'>('documents');
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 768);
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Load notes list
   useEffect(() => {
     async function load() {
@@ -252,7 +265,11 @@ export default function NotesGenerator() {
         .order('updated_at', { ascending: false });
       const list = (data as Note[]) ?? [];
       setNotes(list);
-      if (list.length > 0) selectNote(list[0]);
+      if (list.length > 0) {
+        selectNote(list[0]);
+        // Land directly on 'note' tab if there is a note initially loaded
+        setActiveTab('note');
+      }
       setLoadingNotes(false);
     }
     load();
@@ -265,6 +282,7 @@ export default function NotesGenerator() {
     if (editorRef.current) {
       editorRef.current.innerHTML = note.content ?? '';
     }
+    setActiveTab('note');
   }
 
   // Save current note text
@@ -343,6 +361,12 @@ export default function NotesGenerator() {
 
     if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
       alert("Unsupported file type. Please upload a PDF file only.");
+      return;
+    }
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
+    if (file.size > MAX_FILE_SIZE) {
+      alert("Selected PDF is too large. Please upload a document smaller than 10MB to avoid server timeouts.");
       return;
     }
 
@@ -550,15 +574,15 @@ export default function NotesGenerator() {
   const hasActiveNote = !!activeNote;
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex flex-col">
+    <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="shrink-0 px-6 py-4 border-b border-ink-700/50 flex items-center justify-between">
+      <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 border-b border-ink-700/50 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-ink-950/20">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">AI Notes Generator</h1>
-          <p className="text-sm text-slate-505">Write notes, then let AI summarize, flashcard, and answer questions.</p>
+          <h1 className="text-lg md:text-xl font-semibold text-white tracking-tight">AI Notes Generator</h1>
+          <p className="text-sm text-slate-500 hidden md:block">Write notes, then let AI summarize, flashcard, and answer questions.</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Explain in points checkbox option */}
           <label className="flex items-center gap-2 cursor-pointer select-none border border-ink-800 bg-ink-900/40 px-3 py-2 rounded-lg hover:border-brand-500/20 transition-all">
             <input
@@ -567,13 +591,13 @@ export default function NotesGenerator() {
               onChange={(e) => setExplainInPoints(e.target.checked)}
               className="w-3.5 h-3.5 rounded border-ink-600 bg-ink-800 text-brand-600 focus:ring-brand-500/30"
             />
-            <span className="text-[11px] font-semibold text-slate-350 hover:text-slate-200">Explain in Points</span>
+            <span className="text-[11px] font-semibold text-slate-300 hover:text-slate-200">Explain in Points</span>
           </label>
 
           {/* Upload PDF Only */}
-          <label className="flex items-center gap-2 bg-ink-850 hover:bg-ink-800 border border-ink-700/60 hover:border-brand-500/30 text-slate-300 hover:text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer transition-all">
+          <label className="flex items-center gap-2 bg-ink-850 hover:bg-ink-800 border border-ink-700/60 hover:border-brand-500/30 text-slate-300 hover:text-white text-xs md:text-sm font-medium px-3 md:px-4 py-2 rounded-lg cursor-pointer transition-all">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin text-brand-400" /> : <Upload className="w-4 h-4 text-brand-400" />}
-            <span>{uploading ? 'Transcribing...' : 'Upload PDF'}</span>
+            <span>{uploading ? 'Transcribing...' : 'Upload PDF (Max 10MB)'}</span>
             <input
               type="file"
               accept=".pdf"
@@ -586,132 +610,177 @@ export default function NotesGenerator() {
           {/* Search Topic Button */}
           <button
             onClick={() => setShowSearchModal(true)}
-            className="flex items-center gap-2 bg-ink-850 hover:bg-ink-800 border border-ink-700/60 hover:border-brand-500/30 text-slate-300 hover:text-white text-sm font-medium px-4 py-2 rounded-lg transition-all"
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-xs md:text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-all"
           >
-            <Sparkles className="w-4 h-4 text-brand-400" />
+            <Sparkles className="w-4 h-4" />
             <span>Search Topic</span>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* LEFT: Notes list sidebar */}
-        <div className="w-64 shrink-0 border-r border-ink-700/50 flex flex-col bg-ink-950/20">
-          <div className="p-4 shrink-0">
-            <button
-              onClick={handleCreateNote}
-              className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
-            >
-              <Plus className="w-4 h-4" /> New Document
-            </button>
-          </div>
+      {/* Mobile Tab Bar Selector */}
+      <div className="md:hidden shrink-0 border-b border-ink-800/80 bg-ink-950/40 p-2 flex gap-1.5 select-none">
+        <button
+          onClick={() => setActiveTab('documents')}
+          className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl border transition-all ${
+            activeTab === 'documents'
+              ? 'bg-brand-600/10 border-brand-500/20 text-brand-400'
+              : 'bg-transparent border-transparent text-slate-450 hover:text-slate-200'
+          }`}
+        >
+          Documents
+        </button>
+        <button
+          onClick={() => setActiveTab('note')}
+          className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl border transition-all ${
+            activeTab === 'note'
+              ? 'bg-brand-600/10 border-brand-500/20 text-brand-400'
+              : 'bg-transparent border-transparent text-slate-450 hover:text-slate-200'
+          }`}
+        >
+          Note
+        </button>
+        <button
+          onClick={() => setActiveTab('aitools')}
+          className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl border transition-all ${
+            activeTab === 'aitools'
+              ? 'bg-brand-600/10 border-brand-500/20 text-brand-400'
+              : 'bg-transparent border-transparent text-slate-450 hover:text-slate-200'
+          }`}
+        >
+          AI Tools
+        </button>
+      </div>
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
-            {loadingNotes ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
-              </div>
-            ) : notes.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-8">No notes saved yet.</p>
-            ) : (
-              notes.map((note) => (
-                <button
-                  key={note.id}
-                  onClick={() => selectNote(note)}
-                  className={`w-full group text-left px-3.5 py-3 rounded-xl flex items-center justify-between transition-all ${
-                    activeId === note.id
-                      ? 'bg-brand-600/10 border border-brand-500/20 text-white'
-                      : 'hover:bg-white/5 border border-transparent text-slate-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <FileText className={`w-4 h-4 shrink-0 ${activeId === note.id ? 'text-brand-400' : 'text-slate-500'}`} />
-                    <span className="text-xs font-semibold truncate leading-none">{note.title || 'Untitled Note'}</span>
-                  </div>
+      <div className="flex-1 flex overflow-hidden min-h-0 w-full relative">
+        <div
+          className="flex h-full w-[300%] md:w-full transition-transform duration-300 ease-in-out"
+          style={{
+            transform: isMobile
+              ? `translateX(-${activeTab === 'documents' ? 0 : activeTab === 'note' ? 33.3333 : 66.6666}%)`
+              : 'none'
+          }}
+        >
+          {/* LEFT: Notes list sidebar */}
+          <div className="w-[33.3333%] md:w-64 md:shrink-0 border-r border-ink-700/50 flex flex-col bg-ink-950/20 h-full shrink-0 overflow-hidden">
+            <div className="p-4 shrink-0">
+              <button
+                onClick={handleCreateNote}
+                className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
+              >
+                <Plus className="w-4 h-4" /> New Document
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+              {loadingNotes ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
+                </div>
+              ) : notes.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-8">No notes saved yet.</p>
+              ) : (
+                notes.map((note) => (
                   <button
-                    onClick={(e) => handleDeleteNote(note.id, e)}
-                    className="p-1 rounded text-slate-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Delete Note"
+                    key={note.id}
+                    onClick={() => selectNote(note)}
+                    className={`w-full group text-left px-3.5 py-3 rounded-xl flex items-center justify-between transition-all ${
+                      activeId === note.id
+                        ? 'bg-brand-600/10 border border-brand-500/20 text-white'
+                        : 'hover:bg-white/5 border border-transparent text-slate-450'
+                    }`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileText className={`w-4 h-4 shrink-0 ${activeId === note.id ? 'text-brand-400' : 'text-slate-500'}`} />
+                      <span className="text-xs font-semibold truncate leading-none">{note.title || 'Untitled Note'}</span>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteNote(note.id, e)}
+                      className="p-1 rounded text-slate-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete Note"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </button>
-                </button>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* MIDDLE: Live Rich-text Editor */}
-        <div className="flex-1 flex flex-col bg-ink-950/40 p-6 min-w-0">
-          <div className="flex-1 glass rounded-2xl flex flex-col overflow-hidden border border-ink-700/50">
-            {hasActiveNote ? (
-              <>
-                {/* Editor header */}
-                <div className="shrink-0 px-6 py-4 border-b border-ink-800 flex items-center justify-between gap-4">
-                  <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Note Title"
-                    className="bg-transparent text-lg font-bold text-white placeholder-slate-600 focus:outline-none flex-1 min-w-0"
-                  />
-                  <div className="flex items-center gap-2 shrink-0 animate-fadeIn">
-                    {saving ? (
-                      <span className="text-xs text-slate-550 flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</span>
-                    ) : savedAt ? (
-                      <span className="text-xs text-emerald-455/80 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Saved {savedAt}</span>
-                    ) : null}
-                    <button
-                      onClick={() => saveNote(activeId!)}
-                      className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all"
-                    >
-                      <Save className="w-4 h-4" /> Save
-                    </button>
-                    <button
-                      onClick={exportNoteToPDF}
-                      className="flex items-center gap-1.5 bg-brand-600/10 hover:bg-brand-600/20 text-brand-300 border border-brand-500/20 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
-                    >
-                      Export PDF
-                    </button>
+          {/* MIDDLE: Live Rich-text Editor */}
+          <div className="w-[33.3333%] md:flex-1 flex flex-col bg-ink-950/40 p-4 md:p-6 min-w-0 h-full shrink-0 overflow-hidden">
+            <div className="flex-1 glass rounded-2xl flex flex-col overflow-hidden border border-ink-700/50 bg-ink-950/20">
+              {hasActiveNote ? (
+                <>
+                  {/* Editor header */}
+                  <div className="shrink-0 px-4 md:px-6 py-3 md:py-4 border-b border-ink-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Note Title"
+                      className="bg-transparent text-base md:text-lg font-bold text-white placeholder-slate-600 focus:outline-none flex-1 min-w-0"
+                    />
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto animate-fadeIn">
+                      {saving ? (
+                        <span className="text-xs text-slate-550 flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</span>
+                      ) : savedAt ? (
+                        <span className="text-xs text-emerald-455/80 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Saved {savedAt}</span>
+                      ) : null}
+                      <button
+                        onClick={() => saveNote(activeId!)}
+                        className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all"
+                      >
+                        <Save className="w-4 h-4" /> Save
+                      </button>
+                      <button
+                        onClick={exportNoteToPDF}
+                        className="flex items-center gap-1.5 bg-brand-600/10 hover:bg-brand-600/20 text-brand-300 border border-brand-500/20 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                      >
+                        Export PDF
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Text styling toolbar */}
-                <div className="shrink-0 px-6 py-2 border-b border-ink-800 bg-ink-900/40 flex items-center gap-1 overflow-x-auto scrollbar-none">
-                  <ToolbarBtn onClick={() => format('bold')} label="B" className="font-bold" />
-                  <ToolbarBtn onClick={() => format('italic')} label="I" className="italic font-serif" />
-                  <ToolbarBtn onClick={() => format('underline')} label="U" className="underline" />
-                  <ToolbarBtn onClick={() => format('strikeThrough')} label="S" className="line-through" />
-                  <div className="h-4 w-px bg-ink-800 mx-1" />
-                  <ToolbarBtn onClick={() => format('insertOrderedList')} label="1." />
-                  <ToolbarBtn onClick={() => format('insertUnorderedList')} label="•" />
-                  <div className="h-4 w-px bg-ink-800 mx-1" />
-                  <ToolbarBtn onClick={() => format('justifyLeft')} label="Left" />
-                  <ToolbarBtn onClick={() => format('justifyCenter')} label="Center" />
-                  <ToolbarBtn onClick={() => format('justifyRight')} label="Right" />
-                </div>
+                  {/* Text styling toolbar */}
+                  <div className="shrink-0 px-4 md:px-6 py-2 border-b border-ink-800 bg-ink-900/40 flex flex-wrap items-center gap-1.5 overflow-x-auto scrollbar-none">
+                    <ToolbarBtn onClick={() => format('bold')} label="B" className="font-bold" />
+                    <ToolbarBtn onClick={() => format('italic')} label="I" className="italic font-serif" />
+                    <ToolbarBtn onClick={() => format('underline')} label="U" className="underline" />
+                    <ToolbarBtn onClick={() => format('strikeThrough')} label="S" className="line-through" />
+                    <div className="h-4 w-px bg-ink-800 mx-0.5" />
+                    <ToolbarBtn onClick={() => format('insertOrderedList')} label="1." />
+                    <ToolbarBtn onClick={() => format('insertUnorderedList')} label="•" />
+                    <div className="h-4 w-px bg-ink-800 mx-0.5" />
+                    <ToolbarBtn onClick={() => format('justifyLeft')} label="Left" />
+                    <ToolbarBtn onClick={() => format('justifyCenter')} label="Center" />
+                    <ToolbarBtn onClick={() => format('justifyRight')} label="Right" />
+                  </div>
 
-                {/* Editor content block */}
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  className="flex-1 p-6 text-slate-300 text-sm focus:outline-none overflow-y-auto whitespace-pre-wrap select-text scrollbar-thin"
-                  style={{ minHeight: '200px' }}
-                />
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-500">
-                <BookOpen className="w-12 h-12 text-brand-500/30 mb-3" />
-                <p className="text-sm font-semibold">No document active</p>
-                <p className="text-xs text-slate-600 mt-1 max-w-xs">
-                  Click "New Document", "Upload PDF", or "Search Topic" to start. Your notes save to your account automatically.
-                </p>
-              </div>
-            )}
+                  {/* Editor content block */}
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    className="flex-1 p-4 md:p-6 text-slate-300 text-sm focus:outline-none overflow-y-auto whitespace-pre-wrap select-text scrollbar-thin"
+                    style={{ minHeight: '200px' }}
+                  />
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-500">
+                  <BookOpen className="w-12 h-12 text-brand-500/30 mb-3" />
+                  <p className="text-sm font-semibold">No document active</p>
+                  <p className="text-xs text-slate-600 mt-1 max-w-xs">
+                    Click "New Document", "Upload PDF", or "Search Topic" to start. Your notes save to your account automatically.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT: AI Assistant */}
+          <div className="w-[33.3333%] md:w-80 md:shrink-0 flex flex-col h-full shrink-0 overflow-hidden">
+            <AIPanel getEditorText={getEditorText} hasActiveNote={!!activeNote} className="w-full h-full border-l border-ink-700/50" />
           </div>
         </div>
-
-        {/* RIGHT: AI Assistant */}
-        <AIPanel getEditorText={getEditorText} hasActiveNote={!!activeNote} />
       </div>
 
       {/* Search Topic Modal */}
@@ -809,7 +878,7 @@ function ToolbarBtn({ onClick, label, className = '' }: { onClick: () => void; l
 
 /* ============ AI Assistant Right Sidebar panel ============ */
 
-function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string; hasActiveNote: boolean }) {
+function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorText: () => string; hasActiveNote: boolean; className?: string }) {
   const [tab, setTab] = useState<AITab>('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -1345,7 +1414,7 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
   };
 
   return (
-    <div className="w-80 shrink-0 border-l border-ink-700/50 flex flex-col bg-ink-950/20">
+    <div className={`w-full md:w-80 shrink-0 border-t md:border-t-0 md:border-l border-ink-700/50 flex flex-col bg-ink-950/20 h-full ${className}`}>
       {/* Tabs */}
       <div className="shrink-0 p-4 border-b border-ink-800/60 flex gap-2">
         <button
@@ -1495,7 +1564,7 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
       </div>
 
       {/* Study Tools Centered Modal */}
-      {toolResult && (
+      {toolResult && createPortal(
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all duration-200 animate-in fade-in"
           onClick={() => setToolResult(null)}
@@ -1507,7 +1576,7 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
             {/* Close button in top-right */}
             <button 
               onClick={() => setToolResult(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-xl transition-all"
+              className="absolute top-3 right-3 md:top-4 md:right-4 text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-xl transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1541,11 +1610,12 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Interactive Study Center (Flashcards & Quiz) Modal */}
-      {isStudyCenterOpen && (
+      {isStudyCenterOpen && createPortal(
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all duration-200 animate-in fade-in"
           onClick={() => setIsStudyCenterOpen(false)}
@@ -1557,7 +1627,7 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
             {/* Close button in top-right */}
             <button 
               onClick={() => setIsStudyCenterOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-xl transition-all"
+              className="absolute top-3 right-3 md:top-4 md:right-4 text-slate-400 hover:text-white hover:bg-slate-800 p-2 rounded-xl transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1579,7 +1649,7 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
                 className={`text-xs font-bold uppercase tracking-widest pb-1 border-b-2 transition-all ${
                   studyCenterTab === 'quiz' 
                     ? 'border-brand-500 text-brand-400' 
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    : 'border-transparent text-slate-450 hover:text-slate-200'
                 }`}
               >
                 Take a Quiz
@@ -1600,7 +1670,8 @@ function AIPanel({ getEditorText, hasActiveNote }: { getEditorText: () => string
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

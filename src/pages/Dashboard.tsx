@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Plus, Check, Trash2, Loader2, Calendar, Clock, MapPin, Sparkles, Target, Code2, Pencil, CalendarPlus, Settings2, User, Trophy, Compass, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Check, Trash2, Loader2, Calendar, Clock, MapPin, Sparkles, Target, Pencil, CalendarPlus, Settings2, User, Trophy, Compass, ExternalLink, ChevronDown, ChefHat } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import type { QuickTask, TimetableEntry } from '../lib/types';
 import TimetableModal, { type TimetableFormState } from '../components/TimetableModal';
 import { STRIVER_SHEET_PROBLEMS } from './DsaTracker';
+import { NEETCODE_150_PROBLEMS } from '../data/neetcode150';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const colorMap: Record<string, string> = {
@@ -22,7 +23,57 @@ function sortTimetable(a: TimetableEntry, b: TimetableEntry) {
   return a.start_time.localeCompare(b.start_time);
 }
 
+const TASK_COLORS = ['blue', 'green', 'purple', 'orange', 'pink', 'teal', 'amber', 'rose'];
+
+const TASK_COLOR_CLASSES: Record<string, string> = {
+  blue: 'bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/35 text-white',
+  green: 'bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/35 text-white',
+  purple: 'bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/35 text-white',
+  orange: 'bg-orange-600/20 hover:bg-orange-600/30 border border-orange-500/35 text-white',
+  pink: 'bg-pink-600/20 hover:bg-pink-600/30 border border-pink-500/35 text-white',
+  teal: 'bg-teal-600/20 hover:bg-teal-600/30 border border-teal-500/35 text-white',
+  amber: 'bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/35 text-white',
+  rose: 'bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/35 text-white',
+};
+
+const PLATFORM_NAMES: Record<string, string> = {
+  leetcode: 'LeetCode',
+  codechef: 'CodeChef',
+  geeksforgeeks: 'GeeksforGeeks',
+  codeforces: 'Codeforces',
+  hackerrank: 'HackerRank',
+};
+
+const PLATFORM_ICONS: Record<string, React.ReactNode> = {
+  leetcode: (
+    <svg className="w-5 h-5 text-orange-500 fill-current" viewBox="0 0 24 24">
+      <path d="M16.102 17.93l-2.69 2.607c-.466.451-1.111.696-1.744.696a2.285 2.285 0 0 1-1.745-.696L3.92 14.517a2.262 2.262 0 0 1 0-3.225l9.098-9.023c.448-.449 1.097-.696 1.738-.696.642 0 1.29.247 1.739.696l2.793 2.766a2.262 2.262 0 0 1 0 3.225l-4.57 4.536t-4.57 4.536c-.449.449-1.097.696-1.739.696-.642 0-1.29-.247-1.738-.696L8.47 11.23a.754.754 0 0 1 0-1.075.77.77 0 0 1 1.082 0l2.366 2.347 4.57-4.537a.754.754 0 0 1 1.083 0 .77.77 0 0 1 0 1.075l-4.569 4.537-2.691 2.671-1.084-1.075 4.57-4.537a.754.754 0 0 1 1.083 0 .77.77 0 0 1 0 1.075l-4.57 4.537z" />
+    </svg>
+  ),
+  codechef: (
+    <ChefHat className="w-5 h-5 text-[#b97a3e]" />
+  ),
+  geeksforgeeks: (
+    <svg className="w-5 h-5 text-[#2f8d46] fill-current" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.8 14.8c-1.32-.42-2.12-1.63-2.12-3.32 0-1.72.84-2.92 2.2-3.32.32-.1.44-.46.24-.72l-.4-.52c-.14-.18-.42-.2-.6-.06C7.3 10.38 6.5 11.96 6.5 13.5c0 1.94.94 3.7 3.02 4.2.22.06.46-.1.46-.34v-.7c-.02-.26-.2-.36-.28-.36zm4.8-.84c0-.24-.24-.4-.46-.34-.08 0-.26.1-.28.36v.7c0 .24.24.4.46.34 2.08-.5 3.02-2.26 3.02-4.2 0-1.54-.8-3.12-3.02-4.64-.18-.14-.46-.12-.6.06l-.4.52c-.2.26-.08.62.24.72 1.36.4 2.2 1.6 2.2 3.32 0 1.69-.8 2.9-2.12 3.32z" />
+    </svg>
+  ),
+  codeforces: (
+    <div className="flex gap-0.5 items-end h-5 w-5 shrink-0 justify-center">
+      <div className="w-1.5 h-3 bg-blue-500 rounded-sm"></div>
+      <div className="w-1.5 h-5 bg-red-500 rounded-sm"></div>
+      <div className="w-1.5 h-4 bg-yellow-500 rounded-sm"></div>
+    </div>
+  ),
+  hackerrank: (
+    <svg className="w-5 h-5 text-[#2ec866] fill-current" viewBox="0 0 24 24">
+      <path d="M12.012 2c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm.012 16.5c-3.59 0-6.5-2.91-6.5-6.5s2.91-6.5 6.5-6.5 6.5 2.91 6.5 6.5-2.91 6.5-6.5 6.5zm-3-8.5v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1zm4 3h-2v-2h2v2z" />
+    </svg>
+  ),
+};
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { profile, user } = useAuth();
   const [tasks, setTasks] = useState<QuickTask[]>([]);
   const [newTask, setNewTask] = useState('');
@@ -36,12 +87,22 @@ export default function Dashboard() {
   const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null);
 
   // POTD State
-  const [potd, setPotd] = useState<{ title: string; link: string; difficulty: string; tags: string[] } | null>(null);
+  const [activePlatform, setActivePlatform] = useState<string>('leetcode');
+  const [allPotd, setAllPotd] = useState<Record<string, { title: string; link: string; difficulty: string; tags: string[] } | null>>({});
   const [loadingPotd, setLoadingPotd] = useState(true);
+  const [platformDropdownOpen, setPlatformDropdownOpen] = useState(false);
 
-  // Striver progress state
-  const [striverProgress, setStriverProgress] = useState({ solved: 0, total: 455 });
-  const [loadingStriver, setLoadingStriver] = useState(true);
+  // Sheet progress state (Striver and NeetCode)
+  const [activeSheet, setActiveSheet] = useState<'striver' | 'neetcode'>('striver');
+  const [sheetProgress, setSheetProgress] = useState<{
+    striver: { solved: number; total: number };
+    neetcode: { solved: number; total: number };
+  }>({
+    striver: { solved: 0, total: 191 },
+    neetcode: { solved: 0, total: 150 }
+  });
+  const [loadingSheet, setLoadingSheet] = useState(true);
+  const [sheetDropdownOpen, setSheetDropdownOpen] = useState(false);
 
   useEffect(() => {
     async function fetchPotd() {
@@ -62,8 +123,8 @@ export default function Dashboard() {
 
         if (res.ok) {
           const json = await res.json();
-          if (json && json.leetcode) {
-            setPotd(json.leetcode);
+          if (json) {
+            setAllPotd(json);
             setLoadingPotd(false);
             return;
           }
@@ -109,8 +170,36 @@ export default function Dashboard() {
       ];
 
       const dayOfYear = getDayOfYear();
-      const index = dayOfYear % fallbackProblems.length;
-      setPotd(fallbackProblems[index]);
+      
+      const localResults: Record<string, any> = {
+        leetcode: fallbackProblems[dayOfYear % fallbackProblems.length],
+        codechef: {
+          title: "Chef and Brain Speed",
+          link: "https://www.codechef.com/problems/CBSPEED",
+          difficulty: "Easy",
+          tags: ["Basic Math"]
+        },
+        geeksforgeeks: {
+          title: "Find transition point",
+          link: "https://practice.geeksforgeeks.org/problems/find-transition-point-1587115620/1",
+          difficulty: "Easy",
+          tags: ["Binary Search"]
+        },
+        codeforces: {
+          title: "158A. Next Round",
+          link: "https://codeforces.com/problemset/problem/158/A",
+          difficulty: "Easy",
+          tags: ["implementation"]
+        },
+        hackerrank: {
+          title: "Simple Array Sum",
+          link: "https://www.hackerrank.com/challenges/simple-array-sum/problem",
+          difficulty: "Easy",
+          tags: ["Algorithms"]
+        }
+      };
+
+      setAllPotd(localResults);
       setLoadingPotd(false);
     }
     
@@ -118,9 +207,9 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    async function loadStriverProgress() {
+    async function loadSheetProgress() {
       if (!user) return;
-      setLoadingStriver(true);
+      setLoadingSheet(true);
       try {
         const { data } = await supabase
           .from('dsa_tracker')
@@ -128,20 +217,28 @@ export default function Dashboard() {
           .eq('user_id', user.id);
 
         if (data) {
-          const solved = data.filter((p) => 
-            p.status === 'Solved' && 
+          const solvedProblems = data.filter((p) => p.status === 'Solved');
+          
+          const striverSolved = solvedProblems.filter((p) => 
             STRIVER_SHEET_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())
           ).length;
           
-          setStriverProgress({ solved, total: 455 });
+          const neetcodeSolved = solvedProblems.filter((p) => 
+            NEETCODE_150_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())
+          ).length;
+          
+          setSheetProgress({
+            striver: { solved: striverSolved, total: STRIVER_SHEET_PROBLEMS.length },
+            neetcode: { solved: neetcodeSolved, total: NEETCODE_150_PROBLEMS.length }
+          });
         }
       } catch (err) {
-        console.error('Error loading striver progress:', err);
+        console.error('Error loading sheet progress:', err);
       } finally {
-        setLoadingStriver(false);
+        setLoadingSheet(false);
       }
     }
-    loadStriverProgress();
+    loadSheetProgress();
   }, [user]);
 
   const displayName = profile?.full_name || 'Student';
@@ -155,7 +252,7 @@ export default function Dashboard() {
       if (!user) return;
       const { data } = await supabase
         .from('quick_tasks')
-        .select('id, user_id, title, done, due_date, created_at')
+        .select('id, user_id, title, done, due_date, color, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       setTasks((data as QuickTask[]) ?? []);
@@ -252,10 +349,11 @@ export default function Dashboard() {
     e.preventDefault();
     if (!newTask.trim() || !user) return;
     setAdding(true);
+    const color = TASK_COLORS[tasks.length % TASK_COLORS.length];
     const { data } = await supabase
       .from('quick_tasks')
-      .insert({ title: newTask.trim(), user_id: user.id })
-      .select('id, user_id, title, done, due_date, created_at')
+      .insert({ title: newTask.trim(), user_id: user.id, color })
+      .select('id, user_id, title, done, due_date, color, created_at')
       .maybeSingle();
     if (data) setTasks((prev) => [data as QuickTask, ...prev]);
     setNewTask('');
@@ -274,6 +372,7 @@ export default function Dashboard() {
 
   const completedCount = tasks.filter((t) => t.done).length;
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+  const potd = allPotd[activePlatform] || null;
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -311,28 +410,71 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 select-none">
         
         {/* Card 1: LeetCode POTD */}
-        <a 
-          href={potd?.link || "https://leetcode.com/problemset/all/"} 
-          target="_blank" 
-          rel="noreferrer" 
-          className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]"
+        <div 
+          onClick={() => {
+            if (potd?.link) {
+              window.open(potd.link, '_blank', 'noreferrer');
+            }
+          }}
+          className={`glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px] relative cursor-pointer ${platformDropdownOpen ? 'z-30' : 'z-10'}`}
         >
           <div>
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-amber-400 bg-amber-500/10">
-                <Code2 className="w-5 h-5" />
-              </div>
-              {potd && (
-                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                  potd.difficulty === 'Easy' 
-                    ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' 
-                    : potd.difficulty === 'Medium' 
-                      ? 'text-amber-300 bg-amber-500/10 border-amber-500/20' 
-                      : 'text-rose-300 bg-rose-500/10 border-rose-500/20'
-                }`}>
-                  {potd.difficulty}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-500/10 shrink-0">
+                  {PLATFORM_ICONS[activePlatform]}
+                </div>
+                <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-400">
+                  {PLATFORM_NAMES[activePlatform]} POTD
                 </span>
-              )}
+              </div>
+              
+              <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {potd && (
+                  <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    potd.difficulty === 'Easy' 
+                      ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' 
+                      : potd.difficulty === 'Medium' 
+                        ? 'text-amber-300 bg-amber-500/10 border-amber-500/20' 
+                        : 'text-rose-300 bg-rose-500/10 border-rose-500/20'
+                  }`}>
+                    {potd.difficulty}
+                  </span>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPlatformDropdownOpen((o) => !o);
+                    }}
+                    className="p-1 rounded-md text-slate-500 hover:text-slate-350 hover:bg-ink-800 transition-colors border border-ink-700/60"
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${platformDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {platformDropdownOpen && (
+                    <div className="absolute right-0 mt-1 bg-ink-800 border border-ink-700 rounded-lg shadow-xl py-1 w-36 z-50 animate-fadeIn">
+                      {Object.keys(PLATFORM_NAMES).map((plat) => (
+                        <button
+                          key={plat}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActivePlatform(plat);
+                            setPlatformDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-2 ${
+                            activePlatform === plat 
+                              ? 'text-brand-400 bg-brand-500/10' 
+                              : 'text-slate-300 hover:text-white hover:bg-ink-700'
+                          }`}
+                        >
+                          {PLATFORM_ICONS[plat]}
+                          <span>{PLATFORM_NAMES[plat]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="mt-3">
               {loadingPotd ? (
@@ -346,7 +488,7 @@ export default function Dashboard() {
                     {potd?.title || 'No active problem'}
                   </h4>
                   <div className="flex flex-wrap gap-1 mt-1.5 max-h-[38px] overflow-hidden">
-                    {potd?.tags.slice(0, 2).map((t, idx) => (
+                    {potd?.tags && potd.tags.slice(0, 2).map((t, idx) => (
                       <span key={idx} className="text-[8px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-ink-800 border border-ink-700 text-slate-400">
                         {t}
                       </span>
@@ -357,41 +499,102 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="mt-2.5 border-t border-ink-700/50 pt-2 flex items-center justify-between text-[10px]">
-            <span className="font-extrabold uppercase tracking-wider text-slate-500">LeetCode POTD</span>
+            <span className="font-extrabold uppercase tracking-wider text-slate-500">{PLATFORM_NAMES[activePlatform]} POTD</span>
             <span className="text-brand-400 font-bold flex items-center gap-0.5 hover:text-brand-300">Solve <ExternalLink className="w-3 h-3" /></span>
           </div>
-        </a>
+        </div>
 
-        {/* Card 2: Striver's A2Z Progress */}
-        <a 
-          href="https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2" 
-          target="_blank" 
-          rel="noreferrer" 
-          className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]"
+        {/* Card 2: Sheet Selector Progress */}
+        <div 
+          onClick={() => {
+            const targetTab = activeSheet === 'striver' ? 'striver-sheet' : 'neetcode-150';
+            navigate(`/tech/dsa?tab=${targetTab}`);
+          }}
+          className={`glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px] relative cursor-pointer ${sheetDropdownOpen ? 'z-30' : 'z-10'}`}
         >
           <div>
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-violet-400 bg-violet-500/10">
-              <Trophy className="w-5 h-5" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-violet-400 bg-violet-500/10 shrink-0">
+                  <Trophy className="w-4.5 h-4.5" />
+                </div>
+                <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-400">
+                  {activeSheet === 'striver' ? 'Striver SDE Sheet' : 'NeetCode 150'}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSheetDropdownOpen((o) => !o);
+                    }}
+                    className="p-1 rounded-md text-slate-500 hover:text-slate-350 hover:bg-ink-800 transition-colors border border-ink-700/60"
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sheetDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {sheetDropdownOpen && (
+                    <div className="absolute right-0 mt-1 bg-ink-800 border border-ink-700 rounded-lg shadow-xl py-1 w-44 z-50 animate-fadeIn">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveSheet('striver');
+                          setSheetDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-2 ${
+                          activeSheet === 'striver' 
+                            ? 'text-brand-400 bg-brand-500/10' 
+                            : 'text-slate-300 hover:text-white hover:bg-ink-700'
+                        }`}
+                      >
+                        <Trophy className="w-3.5 h-3.5 text-violet-400" />
+                        <span>Striver SDE Sheet</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveSheet('neetcode');
+                          setSheetDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-2 ${
+                          activeSheet === 'neetcode' 
+                            ? 'text-brand-400 bg-brand-500/10' 
+                            : 'text-slate-300 hover:text-white hover:bg-ink-700'
+                        }`}
+                      >
+                        <Trophy className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>NeetCode 150</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+            
             <div className="mt-3">
-              {loadingStriver ? (
+              {loadingSheet ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                   <span className="text-xs text-slate-500">Loading progress...</span>
                 </div>
               ) : (
                 <>
-                  <p className="text-2xl font-black text-white">{striverProgress.solved} / {striverProgress.total}</p>
+                  <p className="text-2xl font-black text-white">
+                    {activeSheet === 'striver' ? sheetProgress.striver.solved : sheetProgress.neetcode.solved} / {activeSheet === 'striver' ? sheetProgress.striver.total : sheetProgress.neetcode.total}
+                  </p>
                   <p className="text-xs text-slate-400 font-medium mt-0.5">Problems Solved</p>
                 </>
               )}
             </div>
           </div>
           <div className="mt-2.5 border-t border-ink-700/50 pt-2 flex items-center justify-between text-[10px]">
-            <span className="font-extrabold uppercase tracking-wider text-slate-500">Striver's A2Z</span>
-            <span className="text-brand-400 font-bold flex items-center gap-0.5 hover:text-brand-300">Sheet <ExternalLink className="w-3 h-3" /></span>
+            <span className="font-extrabold uppercase tracking-wider text-slate-500">
+              {activeSheet === 'striver' ? 'Striver SDE Sheet' : 'NeetCode 150'}
+            </span>
+            <span className="text-brand-400 font-bold flex items-center gap-0.5 hover:text-brand-300">View <Compass className="w-3 h-3" /></span>
           </div>
-        </a>
+        </div>
 
         {/* Card 3: Coding Roadmap Quick Access */}
         <div className="glass rounded-xl p-4 card-hover flex flex-col justify-between h-[155px]">
@@ -486,32 +689,41 @@ export default function Dashboard() {
                 No tasks yet. Add one above.
               </div>
             ) : (
-              tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="group flex items-center gap-3 bg-ink-800/50 hover:bg-ink-800 rounded-lg px-3 py-2.5 transition-colors"
-                >
+              tasks.map((task) => {
+                const bgClass = task.color && TASK_COLOR_CLASSES[task.color] 
+                  ? TASK_COLOR_CLASSES[task.color] 
+                  : 'bg-ink-800/50 hover:bg-ink-800 border border-transparent text-slate-200';
+                return (
+                  <div
+                    key={task.id}
+                    className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all ${bgClass}`}
+                  >
                   <button
                     onClick={() => toggleTask(task.id, task.done)}
                     className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
                       task.done
-                        ? 'bg-brand-600 border-brand-600 text-white'
-                        : 'border-ink-600 hover:border-brand-500'
+                        ? 'bg-brand-650 border-brand-550 text-white'
+                        : task.color 
+                          ? 'border-white/40 hover:border-white/80' 
+                          : 'border-ink-600 hover:border-brand-500'
                     }`}
                   >
                     {task.done && <Check className="w-3 h-3" />}
                   </button>
-                  <span className={`flex-1 text-sm ${task.done ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                  <span className={`flex-1 text-sm font-semibold ${task.done ? 'line-through opacity-50 text-white' : 'text-white'}`}>
                     {task.title}
                   </span>
                   <button
                     onClick={() => deleteTask(task.id)}
-                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-all"
+                    className={`opacity-0 group-hover:opacity-100 transition-all ${
+                      task.color ? 'text-white/60 hover:text-white' : 'text-slate-505 hover:text-rose-400'
+                    }`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                </div>
-              ))
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

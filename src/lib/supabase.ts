@@ -1,3 +1,15 @@
+/**
+ * IMPORTANT AUTH CONFIGURATION SAFEGUARD:
+ * For Email/Password signups to work, you must manually enable the Email provider 
+ * in the Supabase Dashboard:
+ * 1. Go to your project page (e.g. https://supabase.com/dashboard/project/ahdggyxzsbiyrjiflltd)
+ * 2. Navigate to Authentication -> Providers -> Email
+ * 3. Switch the "Enable Email provider" toggle to ON.
+ * 4. Confirm "Allow new users to sign up" is enabled in settings.
+ * Without this remote dashboard configuration, client signup requests will return
+ * an "Email signups are disabled" error.
+ */
+
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';

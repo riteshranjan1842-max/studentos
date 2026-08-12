@@ -88,6 +88,7 @@ export interface QuickTask {
   title: string;
   done: boolean;
   due_date: string | null;
+  color?: string | null;
   created_at: string;
 }
 

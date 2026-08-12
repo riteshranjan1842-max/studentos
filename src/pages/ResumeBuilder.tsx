@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Plus, Trash2, Loader2, Check, User, GraduationCap,
   Briefcase, Code2, FolderGit2, Palette, FileText, ExternalLink, Mail, Phone, MapPin, Github, Linkedin, Save, Upload, Settings
@@ -217,6 +217,40 @@ export default function ResumeBuilder() {
   };
 
   const [isOverflowing, setIsOverflowing] = useState(false);
+
+  // References and states for preview auto-scaling
+  const previewParentRef = useRef<HTMLDivElement>(null);
+  const previewElRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [previewHeight, setPreviewHeight] = useState(1122);
+
+  const updateDimensions = useCallback(() => {
+    if (previewParentRef.current) {
+      const width = previewParentRef.current.clientWidth;
+      const availableWidth = width - 32; // padding
+      const currentScale = availableWidth < 794 ? availableWidth / 794 : 1;
+      setScale(currentScale);
+    }
+    if (previewElRef.current) {
+      setPreviewHeight(previewElRef.current.scrollHeight);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateDimensions();
+  }, [resume, updateDimensions]);
+
+  useEffect(() => {
+    if (!previewParentRef.current) return;
+    const observer = new ResizeObserver(() => {
+      updateDimensions();
+    });
+    observer.observe(previewParentRef.current);
+    if (previewElRef.current) {
+      observer.observe(previewElRef.current);
+    }
+    return () => observer.disconnect();
+  }, [updateDimensions]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1456,7 +1490,7 @@ export default function ResumeBuilder() {
   return (
     <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-ink-800/40">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-ink-800/40 shrink-0">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Resume Builder</h1>
           <p className="text-sm text-slate-500 mt-1">Configure your credentials. Changes save instantly and compile into your live portfolio.</p>
@@ -1489,7 +1523,7 @@ export default function ResumeBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* LEFT column: Editor form controls */}
-        <div className="lg:col-span-6 xl:col-span-5 space-y-6 max-h-[82vh] overflow-y-auto pr-2 scrollbar-thin">
+        <div className="lg:col-span-6 xl:col-span-5 space-y-6">
           
           {/* Resume Switcher Controls */}
           <div className="bg-ink-850/60 border border-ink-700/60 rounded-2xl p-4 space-y-4 mb-6">
@@ -1658,7 +1692,7 @@ export default function ResumeBuilder() {
 
         {/* RIGHT column: Live Preview Frame */}
         <div className="lg:col-span-6 xl:col-span-7 flex flex-col space-y-4">
-          <div className="sticky top-4 space-y-4">
+          <div className="lg:sticky lg:top-6 space-y-4">
             
             {/* Toolbar */}
             <div className="glass rounded-2xl p-4 flex flex-col gap-3.5 border border-ink-700/50">
@@ -1780,15 +1814,32 @@ export default function ResumeBuilder() {
             </div>
 
             {/* Live Portfolio Preview Simulated Viewport */}
-            <div className="rounded-2xl border border-ink-700/50 shadow-2xl overflow-auto max-h-[75vh] scrollbar-thin flex justify-center bg-ink-950/40 p-4">
+            <div 
+              ref={previewParentRef}
+              className="rounded-2xl border border-ink-700/50 shadow-2xl overflow-y-auto h-[50vh] lg:h-[calc(100vh-220px)] lg:max-h-[calc(100vh-220px)] scrollbar-thin flex justify-center bg-ink-950/40 p-4"
+            >
               <div 
-                className={`portfolio-preview-container shadow-2xl w-[794px] min-h-[1122px] shrink-0 ${(resume.layout_version || 'classic') === 'updated' ? 'layout-updated' : 'layout-classic'}`}
-                style={{ '--resume-body-font-size': resume.body_font_size || '12px' } as React.CSSProperties}
+                style={{ 
+                  width: `${794 * scale}px`, 
+                  height: `${previewHeight * scale}px`, 
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}
+                className="shrink-0"
               >
-                {resume.selected_theme === 'modern-dark' && <ModernDark resume={resume} />}
-                {resume.selected_theme === 'minimal-stark' && <MinimalStark resume={resume} />}
-                {resume.selected_theme === 'professional-tech' && <ProfessionalTech resume={resume} />}
-                {resume.selected_theme === 'academic-serif' && <AcademicSerif resume={resume} />}
+                <div 
+                  ref={previewElRef}
+                  className={`portfolio-preview-container shadow-2xl w-[794px] min-h-[1122px] absolute top-0 left-0 origin-top-left ${(resume.layout_version || 'classic') === 'updated' ? 'layout-updated' : 'layout-classic'}`}
+                  style={{ 
+                    '--resume-body-font-size': resume.body_font_size || '12px',
+                    transform: `scale(${scale})`,
+                  } as React.CSSProperties}
+                >
+                  {resume.selected_theme === 'modern-dark' && <ModernDark resume={resume} />}
+                  {resume.selected_theme === 'minimal-stark' && <MinimalStark resume={resume} />}
+                  {resume.selected_theme === 'professional-tech' && <ProfessionalTech resume={resume} />}
+                  {resume.selected_theme === 'academic-serif' && <AcademicSerif resume={resume} />}
+                </div>
               </div>
             </div>
 
