@@ -11,6 +11,7 @@ interface AuthState {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null; requiresConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
+  signInWithIdToken: (token: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (patch: Partial<Omit<Profile, 'id' | 'created_at'>>) => Promise<{ error: string | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
@@ -107,6 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }
 
+  async function signInWithIdToken(token: string) {
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token,
+    });
+    if (error) return { error: error.message };
+    if (data.user) {
+      await loadProfile(data.user.id);
+    }
+    return { error: null };
+  }
+
   async function signOut() {
     try {
       await supabase.auth.signOut();
@@ -172,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signIn,
         signInWithGoogle,
+        signInWithIdToken,
         signOut,
         updateProfile,
         resetPasswordForEmail,
