@@ -83,7 +83,7 @@ export default function TimetableModal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div className="relative w-full max-w-md glass rounded-2xl p-6 animate-slide-up">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold dark:text-white text-slate-900">
             {editing ? 'Edit Class' : 'Add Class'}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-ink-800 transition-colors">

@@ -105,7 +105,7 @@ export default function ControlCenterModal({ isOpen, onClose, initialTab = 'sett
         <aside className="w-56 bg-ink-900/60 border-r border-ink-700/30 p-4 flex flex-col justify-between shrink-0">
           <div className="space-y-6">
             <div className="px-2">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Control Center</h2>
+              <h2 className="text-sm font-bold dark:text-white text-slate-900 uppercase tracking-wider">Control Center</h2>
               <p className="text-[10px] text-slate-500 mt-0.5">Manage your workspace preferences</p>
             </div>
             

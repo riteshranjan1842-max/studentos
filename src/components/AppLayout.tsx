@@ -83,7 +83,7 @@ export default function AppLayout() {
           <GraduationCap className="w-5 h-5 text-white" />
         </div>
         <div>
-          <span className="text-base font-semibold text-white tracking-tight">StudentOS</span>
+          <span className="text-base font-semibold dark:text-white text-slate-900 tracking-tight">StudentOS</span>
           <div className="text-[10px] text-slate-500 -mt-0.5 uppercase tracking-wider">v1.0</div>
         </div>
       </div>
@@ -105,8 +105,8 @@ export default function AppLayout() {
                   className={({ isActive }) =>
                     `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
                       isActive
-                        ? 'bg-brand-600/15 dark:text-brand-300 text-brand-600 border border-brand-500/20'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-ink-800/60 border border-transparent'
+                        ? 'bg-brand-600/15 dark:text-brand-300 text-brand-600 border border-brand-500/20 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-ink-800/60 border border-transparent'
                     }`
                   }
                 >
@@ -129,31 +129,31 @@ export default function AppLayout() {
       {/* User card */}
       <div className="p-3 border-t border-ink-700/50">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-ink-800/60">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-semibold shrink-0 shadow-md shadow-brand-500/20">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-200 truncate">{displayName}</p>
+            <p className="text-sm font-medium dark:text-slate-200 text-slate-800 truncate">{displayName}</p>
             <p className="text-xs text-slate-500 truncate">Student Account</p>
           </div>
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="p-1.5 rounded-lg text-slate-550 hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
+            className="p-2 rounded-lg text-slate-500 hover:bg-ink-700/60 transition-colors"
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === 'dark' ? <Sun className="w-4.5 h-4.5 text-amber-400 animate-fade-in" /> : <Moon className="w-4.5 h-4.5 text-indigo-600 animate-fade-in" />}
           </button>
           <button
             onClick={() => { setControlCenterTab('settings'); setControlCenterOpen(true); }}
             title="Settings"
-            className="p-1.5 rounded-lg text-slate-550 hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
           >
             <Settings2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => signOut()}
             title="Sign out"
-            className="p-1.5 rounded-lg text-slate-550 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -165,8 +165,8 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-ink-950">
       {!isSupabaseConfigured && (
-        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-sm text-amber-200">
-          Supabase is not configured. Add your project credentials to <code className="text-amber-100">.env</code> to enable auth and data sync.
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-sm text-amber-700 dark:text-amber-200">
+          Supabase is not configured. Add your project credentials to <code className="text-amber-800 dark:text-amber-100">.env</code> to enable auth and data sync.
         </div>
       )}
       {/* Desktop sidebar */}
@@ -188,19 +188,19 @@ export default function AppLayout() {
       <div className="lg:pl-64">
         {/* Mobile top bar */}
         <header className="lg:hidden sticky top-0 z-20 glass h-14 flex items-center justify-between px-4">
-          <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg text-slate-300 hover:bg-ink-800">
+          <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-ink-800">
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-brand-400" />
-            <span className="font-semibold text-white">StudentOS</span>
+            <GraduationCap className="w-5 h-5 text-brand-500" />
+            <span className="font-semibold text-slate-900 dark:text-white">StudentOS</span>
           </div>
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="p-2 rounded-lg text-slate-350 hover:text-slate-250 hover:bg-ink-800 transition-colors"
+            className="p-2 rounded-lg text-slate-500 hover:bg-ink-800 transition-colors"
           >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
           </button>
         </header>
 

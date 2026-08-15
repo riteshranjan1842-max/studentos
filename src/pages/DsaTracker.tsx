@@ -1558,7 +1558,7 @@ function DsaAttemptsDrawer({
                     {expandedCodeId === att.id ? 'Hide Code' : 'View Code Snippet'}
                   </button>
                   {expandedCodeId === att.id && (
-                    <pre className="bg-slate-950 p-2.5 rounded-lg text-slate-300 font-mono text-[11px] overflow-x-auto border border-ink-800">
+                    <pre className="bg-ink-850 dark:bg-slate-950 p-2.5 rounded-lg text-slate-800 dark:text-slate-300 font-mono text-[11px] overflow-x-auto border border-ink-700">
                       {att.code_snippet}
                     </pre>
                   )}

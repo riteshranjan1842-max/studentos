@@ -8,8 +8,8 @@
 @layer base {
   :root {
     --ink-950: #f8fafc;
-    --ink-900: #f1f5f9;
-    --ink-850: #ffffff;
+    --ink-900: #ffffff;
+    --ink-850: #f1f5f9;
     --ink-800: #e2e8f0;
     --ink-700: #cbd5e1;
     --ink-600: #94a3b8;
@@ -17,7 +17,7 @@
     --text-main: #0f172a;
     --text-muted: #475569;
     --logo-text-color: #0f172a;
-    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-bg: rgba(255, 255, 255, 0.85);
   }
   
   .dark {
@@ -47,31 +47,35 @@
   }
 }
 
-/* Light-mode overrides */
+/* Light-mode overrides & accessibility rules */
 html.light {
   body {
+    background-color: var(--ink-950) !important;
     color: var(--text-main) !important;
   }
   
-  /* Text colors that are hardcoded in dark mode should be dark in light mode */
-  .text-white:not(.btn-primary *, .bg-gradient-to-br *, .bg-gradient-to-r *, [class*="bg-brand"] *, [class*="bg-emerald"] *, [class*="bg-rose"] *, [class*="bg-sky"] *, button *, .keep-white, svg *, .text-emerald-500 *, .text-rose-500 *, .text-amber-500 *),
+  /* Text colors that are hardcoded in dark mode should adapt to dark slate in light mode */
+  .text-white:not(.btn-primary *, .bg-gradient-to-br *, .bg-gradient-to-r *, .bg-brand-500, .bg-brand-600, .bg-brand-700, [class*="bg-brand"] *, [class*="bg-emerald"] *, [class*="bg-rose"] *, [class*="bg-sky"] *, button.bg-brand-600 *, .keep-white, svg.keep-white, .badge-white),
   .text-slate-100,
   .text-slate-200 {
-    color: var(--text-main) !important;
+    color: var(--text-main);
   }
   
   .text-slate-300,
-  .text-slate-400,
+  .text-slate-400 {
+    color: var(--text-muted);
+  }
+  
   .text-slate-500 {
-    color: var(--text-muted) !important;
+    color: #64748b;
   }
   
   svg.text-slate-500, svg.text-slate-400 {
-    color: var(--text-muted) !important;
+    color: var(--text-muted);
   }
   
   svg.text-slate-200, svg.text-slate-300 {
-    color: var(--text-main) !important;
+    color: var(--text-main);
   }
   
   .logo-text, .logo-text span {
@@ -91,9 +95,52 @@ html.light {
   }
 
   .glass {
-    background-color: rgba(255, 255, 255, 0.8) !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
     border-color: var(--ink-700) !important;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+  }
+
+  /* Accessible Badge & Tag Enhancements for Light Mode */
+  .text-emerald-400:not(.bg-gradient-to-br *) {
+    color: #059669 !important; /* emerald-600 for AA contrast */
+  }
+  .text-amber-400:not(.bg-gradient-to-br *) {
+    color: #d97706 !important; /* amber-600 for AA contrast */
+  }
+  .text-rose-400:not(.bg-gradient-to-br *) {
+    color: #e11d48 !important; /* rose-600 for AA contrast */
+  }
+  .text-sky-400:not(.bg-gradient-to-br *) {
+    color: #0284c7 !important; /* sky-600 for AA contrast */
+  }
+  .text-brand-400:not(.bg-gradient-to-br *) {
+    color: #2563eb !important; /* brand-600 for AA contrast */
+  }
+  
+  .bg-amber-500\/10 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+  }
+  .bg-emerald-500\/10 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+  }
+  .bg-rose-500\/10 {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+  }
+  .bg-sky-500\/10 {
+    background-color: rgba(14, 165, 233, 0.15) !important;
+  }
+  .bg-brand-500\/10 {
+    background-color: rgba(52, 122, 255, 0.15) !important;
+  }
+
+  /* Input and dropdown enhancements for light mode */
+  input, select, textarea {
+    background-color: var(--ink-900);
+    color: var(--text-main);
+    border-color: var(--ink-700);
+  }
+  input::placeholder, textarea::placeholder {
+    color: #94a3b8;
   }
 }
 

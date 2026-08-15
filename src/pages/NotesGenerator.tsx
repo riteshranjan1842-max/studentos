@@ -54,14 +54,14 @@ function FormattedTextWithDiagrams({ text }: { text: string }) {
 
           if (!imageUrl) {
             return (
-              <pre key={index} className="bg-slate-900 text-slate-300 p-3 rounded-lg overflow-x-auto text-xs font-mono">
+              <pre key={index} className="bg-ink-850 dark:bg-slate-900 text-slate-800 dark:text-slate-300 p-3 rounded-lg overflow-x-auto text-xs font-mono border border-ink-700/40">
                 {code}
               </pre>
             );
           }
 
           return (
-            <div key={index} className="my-5 bg-[#1a1a1f] rounded-xl p-5 border border-slate-800/60 flex flex-col items-center shadow-lg">
+            <div key={index} className="my-5 bg-ink-850 rounded-xl p-5 border border-ink-700 flex flex-col items-center shadow-lg">
               <span className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-3 select-none">AI Diagram View</span>
               <img
                 src={imageUrl}
@@ -75,7 +75,7 @@ function FormattedTextWithDiagrams({ text }: { text: string }) {
                 <summary className="text-[11px] font-semibold text-slate-400 hover:text-slate-200 cursor-pointer focus:outline-none select-none">
                   Show Source Code
                 </summary>
-                <pre className="mt-2 text-left bg-slate-950 text-slate-300 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap border border-slate-800/40">
+                <pre className="mt-2 text-left bg-ink-850 dark:bg-slate-950 text-slate-800 dark:text-slate-300 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap border border-ink-700/40">
                   {code}
                 </pre>
               </details>
@@ -1248,7 +1248,7 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
                     className={"w-full text-left p-3.5 rounded-xl border text-xs font-semibold leading-relaxed transition-all flex items-center gap-3 " + (
                       isSelected 
                         ? 'bg-brand-550/10 border-brand-500 text-white shadow-md shadow-brand-500/5' 
-                        : 'bg-[#1e1e24] hover:bg-slate-800/60 border-slate-800 text-slate-300 hover:text-slate-100'
+                        : 'bg-ink-850 hover:bg-ink-800/60 border-ink-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
                     )}
                   >
                     <div className={"w-5 h-5 rounded-full border flex items-center justify-center shrink-0 text-[10px] font-bold " + (
@@ -1320,21 +1320,21 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
     return (
       <div className="flex-1 flex flex-col min-h-0 space-y-4">
         {/* Overall Stats Banner */}
-        <div className="bg-[#1e1e24] border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+        <div className="bg-ink-850 border border-ink-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
           <div className="space-y-1 text-center sm:text-left">
-            <h4 className="text-sm font-bold text-slate-100">Quiz Completed!</h4>
+            <h4 className="text-sm font-bold dark:text-slate-100 text-slate-900">Quiz Completed!</h4>
             <p className="text-xs text-slate-500">You completed this 10-question evaluation in {Math.floor(quizTimeTaken / 60)}m {quizTimeTaken % 60}s.</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-brand-550/10 border border-brand-500/30 rounded-xl px-4 py-2 text-center">
               <span className="text-[10px] font-bold text-brand-400 block uppercase tracking-wider">Score</span>
-              <span className="text-lg font-black text-white">
+              <span className="text-lg font-black dark:text-white text-slate-900">
                 {quizAnswers.reduce((acc, ans, idx) => acc + (ans === quizData[idx].correctIndex ? 1 : 0), 0)} / {quizData.length}
               </span>
             </div>
             <button
               onClick={generateQuiz}
-              className="px-4 py-2 text-xs font-bold text-slate-350 hover:text-white bg-slate-850 hover:bg-slate-750 border border-slate-800 rounded-xl transition-all cursor-pointer active:scale-95"
+              className="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-350 hover:text-slate-900 dark:hover:text-white bg-ink-800 border border-ink-700 rounded-xl transition-all cursor-pointer active:scale-95"
             >
               Retake Quiz
             </button>
@@ -1352,7 +1352,7 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
             const needsReview = spentTime > 20;
 
             return (
-              <div key={idx} className="bg-[#1e1e24]/40 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+              <div key={idx} className="bg-ink-850/60 border border-ink-700 rounded-2xl p-4 space-y-3">
                 {/* Question Heading */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -1570,7 +1570,7 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
           onClick={() => setToolResult(null)}
         >
           <div 
-            className="w-full max-w-2xl bg-[#1a1a1f] border border-slate-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6 relative flex flex-col max-h-[85vh] transition-all duration-200 animate-in zoom-in-95"
+            className="w-full max-w-2xl bg-ink-900 border border-ink-700 shadow-2xl rounded-2xl p-6 relative flex flex-col max-h-[85vh] transition-all duration-200 animate-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button in top-right */}
@@ -1621,7 +1621,7 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
           onClick={() => setIsStudyCenterOpen(false)}
         >
           <div 
-            className="w-full max-w-2xl bg-[#1a1a1f] border border-slate-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl p-6 relative flex flex-col max-h-[85vh] transition-all duration-200 animate-in zoom-in-95"
+            className="w-full max-w-2xl bg-ink-900 border border-ink-700 shadow-2xl rounded-2xl p-6 relative flex flex-col max-h-[85vh] transition-all duration-200 animate-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button in top-right */}
