@@ -55,7 +55,7 @@ html.light {
   }
   
   /* Text colors that are hardcoded in dark mode should adapt to dark slate in light mode */
-  .text-white:not(.btn-primary *, .bg-gradient-to-br *, .bg-gradient-to-r *, .bg-brand-500, .bg-brand-600, .bg-brand-700, [class*="bg-brand"] *, [class*="bg-emerald"] *, [class*="bg-rose"] *, [class*="bg-sky"] *, button.bg-brand-600 *, .keep-white, svg.keep-white, .badge-white),
+  .text-white:not(.btn-primary *, .bg-gradient-to-br *, .bg-gradient-to-r *, .bg-brand-500, .bg-brand-600, .bg-brand-700, .keep-white, svg.keep-white, .badge-white),
   .text-slate-100,
   .text-slate-200 {
     color: var(--text-main);
@@ -67,7 +67,7 @@ html.light {
   }
   
   .text-slate-500 {
-    color: #64748b;
+    color: #475569;
   }
   
   svg.text-slate-500, svg.text-slate-400 {
@@ -95,41 +95,50 @@ html.light {
   }
 
   .glass {
-    background-color: rgba(255, 255, 255, 0.85) !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
     border-color: var(--ink-700) !important;
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
   }
 
-  /* Accessible Badge & Tag Enhancements for Light Mode */
-  .text-emerald-400:not(.bg-gradient-to-br *) {
-    color: #059669 !important; /* emerald-600 for AA contrast */
+  /* Accessible Badge & Pastel Card Text Contrast Enhancements for Light Mode */
+  .text-emerald-300, .text-emerald-400:not(.bg-gradient-to-br *) {
+    color: #047857 !important; /* emerald-700 for AA contrast */
   }
-  .text-amber-400:not(.bg-gradient-to-br *) {
-    color: #d97706 !important; /* amber-600 for AA contrast */
+  .text-amber-300, .text-amber-400:not(.bg-gradient-to-br *) {
+    color: #b45309 !important; /* amber-700 for AA contrast */
   }
-  .text-rose-400:not(.bg-gradient-to-br *) {
-    color: #e11d48 !important; /* rose-600 for AA contrast */
+  .text-rose-300, .text-rose-400:not(.bg-gradient-to-br *) {
+    color: #be123c !important; /* rose-700 for AA contrast */
   }
-  .text-sky-400:not(.bg-gradient-to-br *) {
-    color: #0284c7 !important; /* sky-600 for AA contrast */
+  .text-sky-300, .text-sky-400:not(.bg-gradient-to-br *) {
+    color: #0369a1 !important; /* sky-700 for AA contrast */
   }
-  .text-brand-400:not(.bg-gradient-to-br *) {
-    color: #2563eb !important; /* brand-600 for AA contrast */
+  .text-violet-300, .text-violet-400:not(.bg-gradient-to-br *) {
+    color: #6d28d9 !important; /* violet-700 for AA contrast */
+  }
+  .text-indigo-300, .text-indigo-400:not(.bg-gradient-to-br *) {
+    color: #4338ca !important; /* indigo-700 for AA contrast */
+  }
+  .text-brand-300, .text-brand-400:not(.bg-gradient-to-br *) {
+    color: #1d4ed8 !important; /* brand-700 for AA contrast */
   }
   
-  .bg-amber-500\/10 {
+  .bg-amber-500\/10, .bg-amber-500\/15, .bg-amber-500\/20 {
     background-color: rgba(245, 158, 11, 0.15) !important;
   }
-  .bg-emerald-500\/10 {
+  .bg-emerald-500\/10, .bg-emerald-500\/15, .bg-emerald-500\/20 {
     background-color: rgba(16, 185, 129, 0.15) !important;
   }
-  .bg-rose-500\/10 {
+  .bg-rose-500\/10, .bg-rose-500\/15, .bg-rose-500\/20 {
     background-color: rgba(244, 63, 94, 0.15) !important;
   }
-  .bg-sky-500\/10 {
+  .bg-sky-500\/10, .bg-sky-500\/15, .bg-sky-500\/20 {
     background-color: rgba(14, 165, 233, 0.15) !important;
   }
-  .bg-brand-500\/10 {
+  .bg-violet-500\/10, .bg-violet-500\/15, .bg-violet-500\/20 {
+    background-color: rgba(139, 92, 246, 0.15) !important;
+  }
+  .bg-brand-500\/10, .bg-brand-500\/15, .bg-brand-500\/20 {
     background-color: rgba(52, 122, 255, 0.15) !important;
   }
 

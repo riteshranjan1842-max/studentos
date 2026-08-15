@@ -46,11 +46,11 @@ const BRANCH_SUBJECTS: Record<string, string[]> = {
 };
 
 const COLORS = [
-  { id: 'sky', label: 'Sky', bg: 'bg-sky-500/20', border: 'border-sky-500/40', text: 'text-sky-300', dot: 'bg-sky-500' },
-  { id: 'emerald', label: 'Emerald', bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-300', dot: 'bg-emerald-500' },
-  { id: 'amber', label: 'Amber', bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-300', dot: 'bg-amber-500' },
-  { id: 'rose', label: 'Rose', bg: 'bg-rose-500/20', border: 'border-rose-500/40', text: 'text-rose-300', dot: 'bg-rose-500' },
-  { id: 'violet', label: 'Violet', bg: 'bg-violet-500/20', border: 'border-violet-500/40', text: 'text-violet-300', dot: 'bg-violet-500' },
+  { id: 'sky', label: 'Sky', bg: 'bg-sky-500/20', border: 'border-sky-500/40', text: 'text-sky-900 dark:text-sky-300', dot: 'bg-sky-500' },
+  { id: 'emerald', label: 'Emerald', bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-900 dark:text-emerald-300', dot: 'bg-emerald-500' },
+  { id: 'amber', label: 'Amber', bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-900 dark:text-amber-300', dot: 'bg-amber-500' },
+  { id: 'rose', label: 'Rose', bg: 'bg-rose-500/20', border: 'border-rose-500/40', text: 'text-rose-900 dark:text-rose-300', dot: 'bg-rose-500' },
+  { id: 'violet', label: 'Violet', bg: 'bg-violet-500/20', border: 'border-violet-500/40', text: 'text-violet-900 dark:text-violet-300', dot: 'bg-violet-500' },
 ];
 
 function colorMeta(id: string) {

@@ -240,7 +240,7 @@ export default function Attendance() {
       ) : subjects.length === 0 ? (
         <div className="glass rounded-2xl p-12 text-center border border-ink-700/50">
           <CalendarCheck className="w-12 h-12 text-emerald-500/40 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-white">No subjects added yet</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">No subjects added yet</h3>
           <p className="text-slate-500 text-sm mt-1 max-w-sm mx-auto">
             Get started by adding subjects manually above, or click **Import from Timetable** to pull subjects from your scanned schedule.
           </p>
@@ -276,9 +276,9 @@ export default function Attendance() {
               >
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <h3 className="font-semibold text-white text-lg leading-tight">{sub.subject}</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-white text-lg leading-tight">{sub.subject}</h3>
                     <p className={`text-xs mt-1.5 font-medium ${
-                      subBelowThreshold ? 'text-rose-400/80' : sub.total === 0 ? 'text-slate-500' : 'text-emerald-400/80'
+                      subBelowThreshold ? 'text-rose-600 dark:text-rose-400/80' : sub.total === 0 ? 'text-slate-500' : 'text-emerald-700 dark:text-emerald-400/80'
                     }`}>
                       {statusMessage}
                     </p>
@@ -296,7 +296,7 @@ export default function Attendance() {
                 <div className="flex items-end justify-between mt-5">
                   <div>
                     <p className="text-xs text-slate-500 font-medium">Classes Attended</p>
-                    <p className="text-xl font-bold text-white mt-0.5">
+                    <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
                       {sub.attended} <span className="text-sm font-medium text-slate-500">/ {sub.total}</span>
                     </p>
                   </div>

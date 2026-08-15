@@ -10,11 +10,11 @@ import { NEETCODE_150_PROBLEMS } from '../data/neetcode150';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const colorMap: Record<string, string> = {
-  sky: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
-  emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  amber: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
-  rose: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
-  violet: 'bg-violet-500/10 text-violet-300 border-violet-500/20',
+  sky: 'bg-sky-500/15 dark:bg-sky-500/10 text-sky-900 dark:text-sky-300 border-sky-500/30 dark:border-sky-500/20',
+  emerald: 'bg-emerald-500/15 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 border-emerald-500/30 dark:border-emerald-500/20',
+  amber: 'bg-amber-500/15 dark:bg-amber-500/10 text-amber-900 dark:text-amber-300 border-amber-500/30 dark:border-amber-500/20',
+  rose: 'bg-rose-500/15 dark:bg-rose-500/10 text-rose-900 dark:text-rose-300 border-rose-500/30 dark:border-rose-500/20',
+  violet: 'bg-violet-500/15 dark:bg-violet-500/10 text-violet-900 dark:text-violet-300 border-violet-500/30 dark:border-violet-500/20',
 };
 
 function sortTimetable(a: TimetableEntry, b: TimetableEntry) {
@@ -732,8 +732,8 @@ export default function Dashboard() {
         <div className="lg:col-span-2 glass rounded-2xl p-5 card-hover">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-semibold text-white">Respective Day Schedule</h2>
-              <p className="text-sm text-slate-500 mt-0.5">Your classes for today</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Respective Day Schedule</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Your classes for today</p>
             </div>
             {timetable.length > 0 && (
               <div className="flex items-center gap-2">
@@ -746,7 +746,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setManageMode((m) => !m)}
                   className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
-                    manageMode ? 'bg-brand-600/20 text-brand-300 border border-brand-500/30' : 'bg-ink-800 text-slate-400 hover:text-slate-200'
+                    manageMode ? 'bg-brand-600/20 text-brand-600 dark:text-brand-300 border border-brand-500/30' : 'bg-ink-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
                   <Settings2 className="w-3.5 h-3.5" /> {manageMode ? 'Done' : 'Manage'}
@@ -762,10 +762,10 @@ export default function Dashboard() {
           ) : timetable.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mb-4">
-                <CalendarPlus className="w-7 h-7 text-brand-400" />
+                <CalendarPlus className="w-7 h-7 text-brand-500" />
               </div>
-              <h3 className="text-base font-semibold text-white">No timetable yet</h3>
-              <p className="text-sm text-slate-500 mt-1 max-w-xs">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">No timetable yet</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xs">
                 Add your classes to see your schedule here. It syncs to your account automatically.
               </p>
               <button
@@ -777,12 +777,12 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between bg-brand-600/5 border border-brand-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between bg-brand-600/10 dark:bg-brand-600/5 border border-brand-500/25 rounded-xl p-4">
                 <div>
-                  <h3 className="text-base font-semibold text-white uppercase tracking-wide">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white uppercase tracking-wide">
                     {todayName}'s Classes
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                     Showing today's schedule. You have {todayClasses.length} classes today.
                   </p>
                 </div>
@@ -790,7 +790,7 @@ export default function Dashboard() {
 
               {todayClasses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center bg-ink-800/20 border border-ink-700/30 rounded-xl">
-                  <p className="text-sm text-slate-500 italic">No classes today. Enjoy your day! 🎉</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 italic">No classes today. Enjoy your day! 🎉</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -801,21 +801,21 @@ export default function Dashboard() {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-base font-semibold text-white leading-tight">{c.subject}</p>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-xs opacity-80">
+                          <p className="text-base font-semibold text-slate-900 dark:text-white leading-tight">{c.subject}</p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
                             <div className="flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5" />
+                              <Clock className="w-3.5 h-3.5 shrink-0 opacity-80" />
                               <span>{c.start_time} - {c.end_time}</span>
                             </div>
                             {c.room && (
                               <div className="flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5" />
+                                <MapPin className="w-3.5 h-3.5 shrink-0 opacity-80" />
                                 <span>Room: {c.room}</span>
                               </div>
                             )}
                             {c.professor && (
                               <div className="flex items-center gap-1.5">
-                                <User className="w-3.5 h-3.5" />
+                                <User className="w-3.5 h-3.5 shrink-0 opacity-80" />
                                 <span>Prof: {c.professor}</span>
                               </div>
                             )}

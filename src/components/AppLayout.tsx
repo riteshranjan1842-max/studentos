@@ -170,7 +170,7 @@ export default function AppLayout() {
         </div>
       )}
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 glass z-30">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-ink-950/85 dark:bg-ink-950/85 backdrop-blur-xl border-r border-ink-700/60 z-30">
         {sidebarContent}
       </aside>
 
@@ -178,7 +178,7 @@ export default function AppLayout() {
       {mobileOpen && (
         <>
           <div className="lg:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in" onClick={closeMobile} />
-          <aside className="lg:hidden fixed inset-y-0 left-0 w-64 glass z-50 animate-slide-up">
+          <aside className="lg:hidden fixed inset-y-0 left-0 w-64 bg-ink-950/95 dark:bg-ink-950/95 backdrop-blur-xl border-r border-ink-700/60 z-50 animate-slide-up">
             {sidebarContent}
           </aside>
         </>
