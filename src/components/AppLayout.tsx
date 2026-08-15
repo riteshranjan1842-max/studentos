@@ -163,50 +163,53 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-ink-950">
+    <div className="min-h-screen bg-ink-950 flex flex-col">
       {!isSupabaseConfigured && (
         <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-sm text-amber-700 dark:text-amber-200">
           Supabase is not configured. Add your project credentials to <code className="text-amber-800 dark:text-amber-100">.env</code> to enable auth and data sync.
         </div>
       )}
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-ink-950/85 dark:bg-ink-950/85 backdrop-blur-xl border-r border-ink-700/60 z-30">
-        {sidebarContent}
-      </aside>
+      
+      <div className="flex-1 flex min-w-0 relative">
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 sticky top-0 h-screen bg-ink-950/85 dark:bg-ink-950/85 backdrop-blur-xl border-r border-ink-700/60 z-10">
+          {sidebarContent}
+        </aside>
 
-      {/* Mobile sidebar */}
-      {mobileOpen && (
-        <>
-          <div className="lg:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in" onClick={closeMobile} />
-          <aside className="lg:hidden fixed inset-y-0 left-0 w-64 bg-ink-950/95 dark:bg-ink-950/95 backdrop-blur-xl border-r border-ink-700/60 z-50 animate-slide-up">
-            {sidebarContent}
-          </aside>
-        </>
-      )}
+        {/* Mobile sidebar */}
+        {mobileOpen && (
+          <>
+            <div className="lg:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in" onClick={closeMobile} />
+            <aside className="lg:hidden fixed inset-y-0 left-0 w-64 bg-ink-950/95 dark:bg-ink-950/95 backdrop-blur-xl border-r border-ink-700/60 z-50 animate-slide-up">
+              {sidebarContent}
+            </aside>
+          </>
+        )}
 
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Mobile top bar */}
-        <header className="lg:hidden sticky top-0 z-20 glass h-14 flex items-center justify-between px-4">
-          <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-ink-800">
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-brand-500" />
-            <span className="font-semibold text-slate-900 dark:text-white">StudentOS</span>
-          </div>
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="p-2 rounded-lg text-slate-500 hover:bg-ink-800 transition-colors"
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
-          </button>
-        </header>
+        {/* Main content */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+          {/* Mobile top bar */}
+          <header className="lg:hidden sticky top-0 z-20 glass h-14 flex items-center justify-between px-4">
+            <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-ink-800">
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-brand-500" />
+              <span className="font-semibold text-slate-900 dark:text-white">StudentOS</span>
+            </div>
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 rounded-lg text-slate-500 hover:bg-ink-800 transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
+            </button>
+          </header>
 
-        <main key={location.pathname} className="animate-fade-in">
-          <Outlet />
-        </main>
+          <main key={location.pathname} className="flex-1 animate-fade-in">
+            <Outlet />
+          </main>
+        </div>
       </div>
 
       {/* Mobile menu close button overlay (when open) */}
