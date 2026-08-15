@@ -2,9 +2,11 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import {
   GraduationCap, LayoutDashboard, Sparkles, CalendarCheck, TrendingUp, CalendarDays,
-  FileText, Globe, Briefcase, Code2, Map, Menu, X, LogOut, ChevronRight, Target, Settings2
+  FileText, Globe, Briefcase, Code2, Map, Menu, X, LogOut, ChevronRight, Target, Settings2,
+  Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { isSupabaseConfigured } from '../lib/supabase';
 import ControlCenterModal from './ControlCenterModal';
 
@@ -60,6 +62,7 @@ const navSections: NavSection[] = [
 
 export default function AppLayout() {
   const { profile, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [controlCenterOpen, setControlCenterOpen] = useState(false);
@@ -102,18 +105,18 @@ export default function AppLayout() {
                   className={({ isActive }) =>
                     `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
                       isActive
-                        ? 'bg-brand-600/15 text-brand-300 border border-brand-500/20'
+                        ? 'bg-brand-600/15 dark:text-brand-300 text-brand-600 border border-brand-500/20'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-ink-800/60 border border-transparent'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <span className={isActive ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-400'}>
+                      <span className={isActive ? 'dark:text-brand-400 text-brand-600' : 'text-slate-500 group-hover:text-slate-400'}>
                         {item.icon}
                       </span>
                       <span className="font-medium">{item.label}</span>
-                      {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto text-brand-400" />}
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto dark:text-brand-400 text-brand-600" />}
                     </>
                   )}
                 </NavLink>
@@ -133,6 +136,13 @@ export default function AppLayout() {
             <p className="text-sm font-medium text-slate-200 truncate">{displayName}</p>
             <p className="text-xs text-slate-500 truncate">Student Account</p>
           </div>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            className="p-1.5 rounded-lg text-slate-550 hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           <button
             onClick={() => { setControlCenterTab('settings'); setControlCenterOpen(true); }}
             title="Settings"
@@ -185,7 +195,13 @@ export default function AppLayout() {
             <GraduationCap className="w-5 h-5 text-brand-400" />
             <span className="font-semibold text-white">StudentOS</span>
           </div>
-          <div className="w-9" />
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            className="p-2 rounded-lg text-slate-350 hover:text-slate-250 hover:bg-ink-800 transition-colors"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
         </header>
 
         <main key={location.pathname} className="animate-fade-in">

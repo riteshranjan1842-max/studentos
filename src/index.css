@@ -6,15 +6,102 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --ink-950: #f8fafc;
+    --ink-900: #f1f5f9;
+    --ink-850: #ffffff;
+    --ink-800: #e2e8f0;
+    --ink-700: #cbd5e1;
+    --ink-600: #94a3b8;
+    --ink-500: #64748b;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --logo-text-color: #0f172a;
+    --glass-bg: rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark {
+    --ink-950: #0a0b0f;
+    --ink-900: #0f1117;
+    --ink-850: #14161f;
+    --ink-800: #1a1d28;
+    --ink-700: #252836;
+    --ink-600: #353948;
+    --ink-500: #4a4f63;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --logo-text-color: #ffffff;
+    --glass-bg: rgba(20, 22, 31, 0.8);
+  }
+
   * {
-    @apply border-ink-700;
+    border-color: var(--ink-700);
   }
   body {
-    @apply bg-ink-950 text-slate-200 font-sans antialiased;
+    background-color: var(--ink-950);
+    @apply font-sans antialiased;
+    color: var(--text-main);
   }
   .font-serif {
     font-family: 'CMU Serif', Georgia, serif !important;
   }
+}
+
+/* Light-mode overrides */
+html.light {
+  body {
+    color: var(--text-main) !important;
+  }
+  
+  /* Text colors that are hardcoded in dark mode should be dark in light mode */
+  .text-white:not(.btn-primary *, .bg-gradient-to-br *, .bg-gradient-to-r *, [class*="bg-brand"] *, [class*="bg-emerald"] *, [class*="bg-rose"] *, [class*="bg-sky"] *, button *, .keep-white, svg *, .text-emerald-500 *, .text-rose-500 *, .text-amber-500 *),
+  .text-slate-100,
+  .text-slate-200 {
+    color: var(--text-main) !important;
+  }
+  
+  .text-slate-300,
+  .text-slate-400,
+  .text-slate-500 {
+    color: var(--text-muted) !important;
+  }
+  
+  svg.text-slate-500, svg.text-slate-400 {
+    color: var(--text-muted) !important;
+  }
+  
+  svg.text-slate-200, svg.text-slate-300 {
+    color: var(--text-main) !important;
+  }
+  
+  .logo-text, .logo-text span {
+    color: var(--logo-text-color) !important;
+  }
+  
+  .border-ink-700, .border-ink-700\/60, .border-ink-700\/50 {
+    border-color: var(--ink-700) !important;
+  }
+  
+  .border-ink-800 {
+    border-color: var(--ink-800) !important;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--ink-600);
+  }
+
+  .glass {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    border-color: var(--ink-700) !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+  }
+}
+
+/* Global Transitions for smooth theme switching */
+body, aside, main, header, div.glass, .card, nav, .nav-item, button, input, select, textarea {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
 }
 
 @layer utilities {
@@ -26,13 +113,16 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-ink-600 rounded-full;
+    background-color: var(--ink-600);
+    border-radius: 9999px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-ink-500;
+    background-color: var(--ink-500);
   }
   .glass {
-    @apply bg-ink-850/80 backdrop-blur-xl border border-ink-700/60;
+    background-color: var(--glass-bg);
+    @apply backdrop-blur-xl;
+    border: 1px solid var(--ink-700);
   }
   .card-hover {
     @apply transition-all duration-300 hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-500/5;
