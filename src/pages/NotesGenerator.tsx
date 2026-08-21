@@ -976,6 +976,58 @@ export default function NotesGenerator() {
           </div>
         </div>
       )}
+
+      {/* Non-Coding Topic Warning Modal */}
+      {nonCodingWarning?.show && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-ink-900 border border-amber-500/30 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-white">Non-Coding Topic Detected</h3>
+                <p className="text-xs text-amber-400 font-semibold truncate max-w-[240px]">{nonCodingWarning.title}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-300 leading-relaxed bg-ink-950/60 p-4 rounded-2xl border border-ink-800">
+              <p className="font-medium text-white">
+                This note doesn't appear to be a programming or Data Structures topic.
+              </p>
+              <p className="text-slate-400">
+                Code Questions works best with DSA, algorithms, software engineering, or programming language notes (e.g., Linked List, Arrays, Recursion, Python).
+              </p>
+              {nonCodingWarning.reason && (
+                <div className="pt-2.5 border-t border-ink-800/80 text-[11px] text-amber-300">
+                  <span className="font-bold text-amber-400">Topic Analysis:</span> {nonCodingWarning.reason}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => setNonCodingWarning(null)}
+                className="px-4 py-2 bg-ink-800 hover:bg-ink-750 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
+              >
+                Back to Notes
+              </button>
+              <button
+                onClick={() => {
+                  const topicParam = encodeURIComponent(nonCodingWarning.title);
+                  const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
+                  setNonCodingWarning(null);
+                  navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
+                }}
+                className="px-4 py-2 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 text-xs font-bold rounded-xl transition-colors"
+              >
+                Generate Anyway
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -1785,58 +1837,6 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
                 {renderQuizContent()}
               </div>
             )}
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Non-Coding Topic Warning Modal */}
-      {nonCodingWarning?.show && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-ink-900 border border-amber-500/30 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                <AlertCircle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-extrabold text-white">Non-Coding Topic Detected</h3>
-                <p className="text-xs text-amber-400 font-semibold truncate max-w-[240px]">{nonCodingWarning.title}</p>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs text-slate-300 leading-relaxed bg-ink-950/60 p-4 rounded-2xl border border-ink-800">
-              <p className="font-medium text-white">
-                This note doesn't appear to be a programming or Data Structures topic.
-              </p>
-              <p className="text-slate-400">
-                Code Questions works best with DSA, algorithms, software engineering, or programming language notes (e.g., Linked List, Arrays, Recursion, Python).
-              </p>
-              {nonCodingWarning.reason && (
-                <div className="pt-2.5 border-t border-ink-800/80 text-[11px] text-amber-300">
-                  <span className="font-bold text-amber-400">Topic Analysis:</span> {nonCodingWarning.reason}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                onClick={() => setNonCodingWarning(null)}
-                className="px-4 py-2 bg-ink-800 hover:bg-ink-750 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
-              >
-                Back to Notes
-              </button>
-              <button
-                onClick={() => {
-                  const topicParam = encodeURIComponent(nonCodingWarning.title);
-                  const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
-                  setNonCodingWarning(null);
-                  navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
-                }}
-                className="px-4 py-2 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 text-xs font-bold rounded-xl transition-colors"
-              >
-                Generate Anyway
-              </button>
-            </div>
           </div>
         </div>,
         document.body
