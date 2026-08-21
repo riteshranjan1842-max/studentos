@@ -14,7 +14,7 @@ interface ChatMessage {
 }
 
 interface RequestBody {
-  action: "chat" | "summarize" | "flashcards" | "quiz" | "grammar" | "assignment" | "detailed_analysis" | "deep_summary" | "ocr" | "generate_topic_notes" | "judge_dsa_attempts" | "generate_code_questions";
+  action: "chat" | "summarize" | "flashcards" | "quiz" | "grammar" | "assignment" | "detailed_analysis" | "deep_summary" | "ocr" | "generate_topic_notes" | "judge_dsa_attempts" | "generate_code_questions" | "classify_coding_topic";
   noteContent?: string;
   messages?: Array<{ role: "user" | "assistant"; content: string }>;
   useContext?: boolean;
@@ -293,6 +293,28 @@ ${a.code_snippet || "// No code snippet logged"}
       history = [{
         role: "user",
         parts: [{ text: `Generate 25 tiered coding practice questions with verified practice links for topic: ${topicName}` }]
+      }];
+    } else if (body.action === "classify_coding_topic") {
+      const topicName = body.topic || "Untitled";
+      systemPrompt =
+        "You are an academic topic classifier. Your job is to determine whether a given study note title and content are primarily about a programming, computer science, software engineering, or Data Structures & Algorithms (DSA) topic.\n\n" +
+        "Examples of CODING topics (isCodingTopic = true):\n" +
+        "- Data Structures: Linked Lists, Arrays, Binary Trees, Stacks, Queues, Graphs, Hash Tables\n" +
+        "- Algorithms: Recursion, Sorting, Searching, Dynamic Programming, Greedy, Backtracking\n" +
+        "- Programming Languages & Tools: Python, Java, C++, JavaScript, React, SQL, Git, Docker\n" +
+        "- Computer Science Core: Operating Systems, Database Systems, Computer Networks, System Design\n\n" +
+        "Examples of NON-CODING topics (isCodingTopic = false):\n" +
+        "- English Grammar, Vocabulary, Writing Skills, Subject-Verb Agreement, Error Correction, VASS\n" +
+        "- History, Geography, Political Science, Biology, Chemistry, Physics, Literature, Economics, Management\n\n" +
+        "Analyze the provided note title and content. Return ONLY a raw JSON object (no markdown, no backticks):\n" +
+        "{\n" +
+        '  "isCodingTopic": true | false,\n' +
+        '  "reason": "Short 1-sentence explanation of why it is or is not a coding topic"\n' +
+        "}";
+
+      history = [{
+        role: "user",
+        parts: [{ text: `Title: ${topicName}\nContent Snippet:\n${noteText ? noteText.slice(0, 1500) : "No content provided"}` }]
       }];
     } else {
       throw new Error(`Unknown action: ${body.action}`);

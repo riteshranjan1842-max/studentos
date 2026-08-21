@@ -241,6 +241,14 @@ export default function NotesGenerator() {
   const [searchTopic, setSearchTopic] = useState('');
   const [searching, setSearching] = useState(false);
 
+  // Topic classification gate states
+  const [checkingTopic, setCheckingTopic] = useState(false);
+  const [nonCodingWarning, setNonCodingWarning] = useState<{
+    show: boolean;
+    title: string;
+    reason?: string;
+  } | null>(null);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const activeNote = notes.find((n) => n.id === activeId) ?? null;
 
@@ -573,6 +581,94 @@ export default function NotesGenerator() {
     printWindow.document.close();
   }
 
+  // Topic classification gate handler
+  async function handleCodeQuestionsClick() {
+    if (checkingTopic) return;
+    const noteTitle = title.trim() || 'Untitled Note';
+    const currentHtml = editorRef.current?.innerHTML || '';
+
+    setCheckingTopic(true);
+    try {
+      const text = (noteTitle + ' ' + currentHtml.replace(/<[^>]*>/g, ' ')).toLowerCase();
+
+      // 1. Fast Keyword Check
+      const nonCodingKeywords = [
+        'grammar', 'subject-verb', 'vass', 'punctuation', 'vocabulary', 'spelling', 
+        'tense', 'verb', 'noun', 'preposition', 'literature', 'history', 'biology', 
+        'chemistry', 'physics', 'economics', 'management', 'essay', 'writing skill'
+      ];
+      const codingKeywords = [
+        'linked list', 'array', 'recursion', 'binary tree', 'stack', 'queue', 'graph', 
+        'hash table', 'sorting', 'leetcode', 'geeksforgeeks', 'python', 'java', 'c++', 
+        'javascript', 'react', 'sql', 'algorithm', 'dsa', 'data structure', 'pointer', 
+        'heap', 'trie', 'greedy', 'backtracking', 'dynamic programming', 'operating system',
+        'database', 'computer science', 'compiler', 'function', 'class', 'method'
+      ];
+
+      const hasNonCoding = nonCodingKeywords.some((k) => text.includes(k));
+      const hasCoding = codingKeywords.some((k) => text.includes(k));
+
+      if (hasNonCoding && !hasCoding) {
+        setNonCodingWarning({
+          show: true,
+          title: noteTitle,
+          reason: 'This note appears to focus on language/grammar rules rather than programming or DSA.',
+        });
+        return;
+      }
+
+      if (hasCoding && !hasNonCoding) {
+        const topicParam = encodeURIComponent(noteTitle);
+        const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
+        navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
+        return;
+      }
+
+      // 2. AI Classifier API Call for ambiguous/custom titles
+      const res = await fetch(FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'classify_coding_topic',
+          topic: noteTitle,
+          noteContent: currentHtml,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.result) {
+        const cleanJson = typeof data.result === 'string'
+          ? data.result.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim()
+          : data.result;
+        const parsed = typeof cleanJson === 'string' ? JSON.parse(cleanJson) : cleanJson;
+
+        if (parsed && parsed.isCodingTopic === false) {
+          setNonCodingWarning({
+            show: true,
+            title: noteTitle,
+            reason: parsed.reason || "This note doesn't appear to be a programming or DSA topic.",
+          });
+          return;
+        }
+      }
+
+      // If classified as coding or default, navigate
+      const topicParam = encodeURIComponent(noteTitle);
+      const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
+      navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
+    } catch (err) {
+      console.warn('Error during topic classification:', err);
+      const topicParam = encodeURIComponent(noteTitle);
+      const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
+      navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
+    } finally {
+      setCheckingTopic(false);
+    }
+  }
+
   const hasActiveNote = !!activeNote;
 
   return (
@@ -741,15 +837,22 @@ export default function NotesGenerator() {
                         Export PDF
                       </button>
                       <button
-                        onClick={() => {
-                          const topicParam = encodeURIComponent(title.trim() || 'Coding Practice');
-                          const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
-                          navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
-                        }}
-                        className="flex items-center gap-1.5 bg-brand-600/10 hover:bg-brand-600/20 text-brand-300 border border-brand-500/20 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                        onClick={handleCodeQuestionsClick}
+                        disabled={checkingTopic}
+                        className="flex items-center gap-1.5 bg-brand-600/10 hover:bg-brand-600/20 disabled:opacity-60 text-brand-300 border border-brand-500/20 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
                         title="Generate practice coding questions for this topic"
                       >
-                        <Code className="w-4 h-4" /> Code Questions
+                        {checkingTopic ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
+                            <span>Checking topic...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Code className="w-4 h-4" />
+                            <span>Code Questions</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1682,6 +1785,58 @@ function AIPanel({ getEditorText, hasActiveNote, className = '' }: { getEditorTe
                 {renderQuizContent()}
               </div>
             )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Non-Coding Topic Warning Modal */}
+      {nonCodingWarning?.show && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-ink-900 border border-amber-500/30 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-white">Non-Coding Topic Detected</h3>
+                <p className="text-xs text-amber-400 font-semibold truncate max-w-[240px]">{nonCodingWarning.title}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-300 leading-relaxed bg-ink-950/60 p-4 rounded-2xl border border-ink-800">
+              <p className="font-medium text-white">
+                This note doesn't appear to be a programming or Data Structures topic.
+              </p>
+              <p className="text-slate-400">
+                Code Questions works best with DSA, algorithms, software engineering, or programming language notes (e.g., Linked List, Arrays, Recursion, Python).
+              </p>
+              {nonCodingWarning.reason && (
+                <div className="pt-2.5 border-t border-ink-800/80 text-[11px] text-amber-300">
+                  <span className="font-bold text-amber-400">Topic Analysis:</span> {nonCodingWarning.reason}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => setNonCodingWarning(null)}
+                className="px-4 py-2 bg-ink-800 hover:bg-ink-750 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
+              >
+                Back to Notes
+              </button>
+              <button
+                onClick={() => {
+                  const topicParam = encodeURIComponent(nonCodingWarning.title);
+                  const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
+                  setNonCodingWarning(null);
+                  navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
+                }}
+                className="px-4 py-2 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 text-xs font-bold rounded-xl transition-colors"
+              >
+                Generate Anyway
+              </button>
+            </div>
           </div>
         </div>,
         document.body
