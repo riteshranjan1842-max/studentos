@@ -14,7 +14,7 @@ interface ChatMessage {
 }
 
 interface RequestBody {
-  action: "chat" | "summarize" | "flashcards" | "quiz" | "grammar" | "assignment" | "detailed_analysis" | "deep_summary" | "ocr" | "generate_topic_notes" | "judge_dsa_attempts";
+  action: "chat" | "summarize" | "flashcards" | "quiz" | "grammar" | "assignment" | "detailed_analysis" | "deep_summary" | "ocr" | "generate_topic_notes" | "judge_dsa_attempts" | "generate_code_questions";
   noteContent?: string;
   messages?: Array<{ role: "user" | "assistant"; content: string }>;
   useContext?: boolean;
@@ -253,6 +253,46 @@ ${a.code_snippet || "// No code snippet logged"}
       history = [{
         role: "user",
         parts: [{ text: `Compare my attempts for the DSA problem "${body.problemName}":\n\n${attemptsSummary}` }]
+      }];
+    } else if (body.action === "generate_code_questions") {
+      const topicName = body.topic || "Data Structures and Algorithms";
+      systemPrompt =
+        "You are an expert computer science professor and tech interviewer. " +
+        `Generate a structured JSON response containing exactly 25 practice coding questions for the topic: "${topicName}". ` +
+        (noteText ? `Base the questions on the student's note content: "${noteText.slice(0, 3000)}". ` : "") +
+        "\n\nSTRICT REQUIRMENTS:\n" +
+        "1. You must return EXACTLY 25 questions divided into 3 difficulty tiers:\n" +
+        "   - Basic (8 questions): core operations, basic syntax, fundamental structures. Tag as difficulty: 'Easy'.\n" +
+        "   - Intermediate (9 questions): combining concepts, common algorithmic patterns, moderate complexity. Tag as difficulty: 'Medium'.\n" +
+        "   - Advanced (8 questions): tricky edge cases, optimizations, complex data structure designs. Tag as difficulty: 'Hard'.\n" +
+        "2. For EVERY question, suggest real practice URLs following this strict platform priority:\n" +
+        "   - Priority 1: LeetCode direct problem link if an exact or close equivalent problem exists (e.g. https://leetcode.com/problems/reverse-linked-list/)\n" +
+        "   - Priority 2: GeeksforGeeks Practice link if not on LeetCode (e.g. https://www.geeksforgeeks.org/problems/detect-loop-in-linked-list/1)\n" +
+        "   - Priority 3: Other platforms (HackerRank, InterviewBit, Codeforces) if neither LeetCode nor GFG has it.\n" +
+        "   - If no exact real problem URL exists on the platform, provide a platform search URL (e.g. https://leetcode.com/problemset/?search=linked+list or https://www.geeksforgeeks.org/explore?page=1&search=linked+list) rather than a fake or broken URL.\n" +
+        "3. Indicate whether the note topic is primarily programming/DSA related using 'isCodingTopic' (boolean).\n\n" +
+        "Return ONLY a raw JSON object (no markdown, no backticks, no conversational commentary) with this exact schema:\n" +
+        "{\n" +
+        '  "isCodingTopic": true,\n' +
+        '  "topic": "' + topicName + '",\n' +
+        '  "questions": [\n' +
+        '    {\n' +
+        '      "id": "1",\n' +
+        '      "title": "Reverse a Linked List",\n' +
+        '      "description": "Reverse a singly linked list in-place and return the new head node.",\n' +
+        '      "tier": "Basic",\n' +
+        '      "difficulty": "Easy",\n' +
+        '      "platform": "LeetCode",\n' +
+        '      "practiceUrl": "https://leetcode.com/problems/reverse-linked-list/",\n' +
+        '      "alternativePlatform": "GeeksforGeeks",\n' +
+        '      "alternativePracticeUrl": "https://www.geeksforgeeks.org/problems/reverse-a-linked-list/1"\n' +
+        '    }\n' +
+        '  ]\n' +
+        "}";
+
+      history = [{
+        role: "user",
+        parts: [{ text: `Generate 25 tiered coding practice questions with verified practice links for topic: ${topicName}` }]
       }];
     } else {
       throw new Error(`Unknown action: ${body.action}`);

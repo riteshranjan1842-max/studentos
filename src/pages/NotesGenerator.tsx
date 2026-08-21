@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus, FileText, Trash2, Save, Loader2, Send, Sparkles, BookOpen,
   CheckSquare, SpellCheck, MessageSquare, Wrench, AlertCircle, Check, Upload, X,
-  Lightbulb, Bookmark, Award, CheckCircle
+  Lightbulb, Bookmark, Award, CheckCircle, Code
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -224,6 +225,7 @@ function processMermaidInHtml(text: string): string {
 }
 
 export default function NotesGenerator() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -737,6 +739,17 @@ export default function NotesGenerator() {
                         className="flex items-center gap-1.5 bg-brand-600/10 hover:bg-brand-600/20 text-brand-300 border border-brand-500/20 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
                         Export PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          const topicParam = encodeURIComponent(title.trim() || 'Coding Practice');
+                          const noteIdParam = activeId ? encodeURIComponent(activeId) : '';
+                          navigate(`/ai/notes/code-questions?topic=${topicParam}&noteId=${noteIdParam}`);
+                        }}
+                        className="flex items-center gap-1.5 bg-brand-600/10 hover:bg-brand-600/20 text-brand-300 border border-brand-500/20 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                        title="Generate practice coding questions for this topic"
+                      >
+                        <Code className="w-4 h-4" /> Code Questions
                       </button>
                     </div>
                   </div>

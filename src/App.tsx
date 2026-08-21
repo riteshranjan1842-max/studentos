@@ -6,7 +6,7 @@ import AppLayout from './components/AppLayout';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import {
-  NotesGen, AssignmentGen, Attendance, CGPA, Timetable,
+  NotesGen, CodeQuestions, AssignmentGen, Attendance, CGPA, Timetable,
   Resume, Portfolio, InternshipFinder, DSATracker, CodingRoadmap, Trackers,
 } from './pages/RoutePages';
 
@@ -50,6 +50,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/ai/notes" element={<NotesGen />} />
+        <Route path="/ai/notes/code-questions" element={<CodeQuestions />} />
         <Route path="/ai/assignments" element={<AssignmentGen />} />
         <Route path="/academic/attendance" element={<Attendance />} />
         <Route path="/academic/cgpa" element={<CGPA />} />

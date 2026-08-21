@@ -1,4 +1,5 @@
 import NotesGenerator from './NotesGenerator';
+import CodeQuestionsPage from './CodeQuestions';
 import TrackersPage from './Trackers';
 import DsaTrackerPage from './DsaTracker';
 import TimetablePage from './Timetable';
@@ -12,6 +13,10 @@ import InternshipFinderPage from './InternshipFinder';
 
 export function NotesGen() {
   return <NotesGenerator />;
+}
+
+export function CodeQuestions() {
+  return <CodeQuestionsPage />;
 }
 
 export function AssignmentGen() {
