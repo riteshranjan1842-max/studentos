@@ -62,57 +62,57 @@ async function callGemini(
     throw new Error("AI service is not configured. Add GEMINI_API_KEY to Supabase Edge Function secrets.");
   }
 
-  // Attempt using Gemini 2.5 Flash as requested
-  let model = "gemini-2.5-flash";
-  let res = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: history,
-        systemInstruction: { parts: [{ text: prompt }] },
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2500,
+  const candidateModels = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+  let lastError: any = null;
+
+  for (const model of candidateModels) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: history,
+            systemInstruction: { parts: [{ text: prompt }] },
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2500,
+            },
+          }),
         },
-      }),
-    },
-  );
+      );
 
-  let data = await res.json();
-  const isDeprecated404 = res.status === 404 || 
-    (data.error && data.error.message && data.error.message.includes("no longer available"));
+      const data = await res.json();
 
-  if (isDeprecated404) {
-    console.warn(`Model ${model} deprecated or unavailable. Falling back to gemini-3.1-flash-lite...`);
-    model = "gemini-3.1-flash-lite";
-    res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: history,
-          systemInstruction: { parts: [{ text: prompt }] },
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2500,
-          },
-        }),
-      },
-    );
+      if (res.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      }
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Gemini API request failed (${res.status}): ${errText}`);
+      // Check if it's high demand (503), rate limit (429), or deprecated/not found (404)
+      const isTransientOrUnavailable = res.status === 503 || res.status === 429 || res.status === 404 ||
+        (data.error && (
+          data.error.code === 503 ||
+          data.error.code === 429 ||
+          data.error.status === "UNAVAILABLE" ||
+          (data.error.message && data.error.message.includes("high demand")) ||
+          (data.error.message && data.error.message.includes("no longer available"))
+        ));
+
+      if (isTransientOrUnavailable) {
+        console.warn(`Model ${model} returned status ${res.status}. Trying next candidate model...`);
+        lastError = data.error || data;
+        continue;
+      }
+
+      throw new Error(`Gemini API request failed (${res.status}): ${JSON.stringify(data.error || data)}`);
+    } catch (err: any) {
+      console.warn(`Error with model ${model}:`, err?.message || err);
+      lastError = err;
     }
-    data = await res.json();
-  } else if (!res.ok) {
-    throw new Error(`Gemini API request failed (${res.status}): ${JSON.stringify(data.error || data)}`);
   }
 
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  throw new Error(`Gemini API request failed: ${lastError?.message || JSON.stringify(lastError)}`);
 }
 
 Deno.serve(async (req: Request) => {
