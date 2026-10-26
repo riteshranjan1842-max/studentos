@@ -22,7 +22,10 @@ export default function Attendance() {
 
   useEffect(() => {
     async function loadAttendance() {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('subject_attendance')
         .select('*')

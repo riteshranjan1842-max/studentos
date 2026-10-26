@@ -1,5 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+declare const Deno: any;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -12,7 +14,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { email, problemName, topic, scheduledAt } = await req.json();
+    const { email, problemName, topic, scheduledAt }: any = await req.json();
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!resendApiKey) {
@@ -92,7 +94,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(emailPayload),
     });
 
-    const resData = await res.json();
+    const resData: any = await res.json();
     if (!res.ok) {
       return new Response(
         JSON.stringify({ error: resData.message || "Failed to send email via Resend" }),

@@ -28,7 +28,10 @@ export default function CGPA() {
 
   useEffect(() => {
     async function loadSgpa() {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('semester_sgpa')
         .select('*')

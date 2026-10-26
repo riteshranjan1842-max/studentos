@@ -47,7 +47,7 @@ function AppRoutes() {
       <Route path="/signup" element={<PublicRoute><AuthPage mode="signup" /></PublicRoute>} />
       <Route path="/reset-password" element={<AuthPage mode="reset-password" />} />
 
-      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+      <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/ai/notes" element={<NotesGen />} />
         <Route path="/ai/notes/code-questions" element={<CodeQuestions />} />

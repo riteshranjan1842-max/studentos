@@ -267,7 +267,10 @@ export default function NotesGenerator() {
   // Load notes list
   useEffect(() => {
     async function load() {
-      if (!user) return;
+      if (!user) {
+        setLoadingNotes(false);
+        return;
+      }
       const { data } = await supabase
         .from('notes')
         .select('id, user_id, title, content, created_at, updated_at')

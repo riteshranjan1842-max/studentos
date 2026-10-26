@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Plus, Check, Trash2, Loader2, Calendar, Clock, MapPin, Sparkles, Target, Pencil, CalendarPlus, Settings2, User, Trophy, Compass, ExternalLink, ChevronDown, ChefHat } from 'lucide-react';
+import { Plus, Check, Trash2, Loader2, Calendar, Clock, MapPin, Sparkles, Target, Pencil, CalendarPlus, Settings2, User, Trophy, Compass, ExternalLink, ChevronDown, ChefHat, LogIn } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -208,7 +208,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadSheetProgress() {
-      if (!user) return;
+      if (!user) {
+        setSheetProgress({
+          striver: { solved: 0, total: STRIVER_SHEET_PROBLEMS.length },
+          neetcode: { solved: 0, total: NEETCODE_150_PROBLEMS.length }
+        });
+        setLoadingSheet(false);
+        return;
+      }
       setLoadingSheet(true);
       try {
         const { data } = await supabase
@@ -216,22 +223,41 @@ export default function Dashboard() {
           .select('problem_name, status')
           .eq('user_id', user.id);
 
-        if (data) {
-          const solvedProblems = data.filter((p) => p.status === 'Solved');
+        let striverCount = 0;
+        let neetcodeCount = 0;
+
+        if (data && data.length > 0) {
+          const solvedProblems = data.filter((p) => p.status === 'Solved' || p.status?.toLowerCase() === 'solved');
           
           const striverSolved = solvedProblems.filter((p) => 
-            STRIVER_SHEET_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())
+            STRIVER_SHEET_PROBLEMS.some(s => s.name.trim().toLowerCase() === p.problem_name?.trim().toLowerCase())
           ).length;
           
           const neetcodeSolved = solvedProblems.filter((p) => 
-            NEETCODE_150_PROBLEMS.some(s => s.name.toLowerCase() === p.problem_name.toLowerCase())
+            NEETCODE_150_PROBLEMS.some(s => s.name.trim().toLowerCase() === p.problem_name?.trim().toLowerCase())
           ).length;
-          
-          setSheetProgress({
-            striver: { solved: striverSolved, total: STRIVER_SHEET_PROBLEMS.length },
-            neetcode: { solved: neetcodeSolved, total: NEETCODE_150_PROBLEMS.length }
-          });
+
+          striverCount = striverSolved > 0 ? striverSolved : (solvedProblems.length > 0 ? solvedProblems.length : 0);
+          neetcodeCount = neetcodeSolved;
         }
+
+        // Also check student_metrics for dsa_solved if striverCount is 0
+        if (striverCount === 0) {
+          const { data: metricsData } = await supabase
+            .from('student_metrics')
+            .select('dsa_solved')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (metricsData?.dsa_solved && metricsData.dsa_solved > 0) {
+            striverCount = metricsData.dsa_solved;
+          }
+        }
+
+        setSheetProgress({
+          striver: { solved: striverCount, total: STRIVER_SHEET_PROBLEMS.length },
+          neetcode: { solved: neetcodeCount, total: NEETCODE_150_PROBLEMS.length }
+        });
       } catch (err) {
         console.error('Error loading sheet progress:', err);
       } finally {
@@ -241,7 +267,7 @@ export default function Dashboard() {
     loadSheetProgress();
   }, [user]);
 
-  const displayName = profile?.full_name || 'Student';
+  const displayName = profile?.full_name || (user ? 'Student' : 'Guest');
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const todayName = days[(new Date().getDay() + 6) % 7] || 'Monday';
@@ -249,7 +275,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadTasks() {
-      if (!user) return;
+      if (!user) {
+        setTasks([]);
+        setLoadingTasks(false);
+        return;
+      }
+      setLoadingTasks(true);
       const { data } = await supabase
         .from('quick_tasks')
         .select('id, user_id, title, done, due_date, color, created_at')
@@ -263,7 +294,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadDueDsa() {
-      if (!user) return;
+      if (!user) {
+        setDueDsaCount(0);
+        return;
+      }
       const { data } = await supabase
         .from('dsa_tracker')
         .select('id, reattempt_at')
@@ -281,7 +315,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadTimetable() {
-      if (!user) return;
+      if (!user) {
+        setTimetable([]);
+        setLoadingTimetable(false);
+        return;
+      }
+      setLoadingTimetable(true);
       const { data } = await supabase
         .from('timetable')
         .select('id, user_id, day:day_of_week, subject, start_time, end_time, professor, room, color, created_at')
@@ -295,7 +334,10 @@ export default function Dashboard() {
   }, [user]);
 
   async function saveTimetableEntry(data: TimetableFormState, id?: string) {
-    if (!user) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     const payload = {
       user_id: user.id,
       day_of_week: data.day,
@@ -331,23 +373,36 @@ export default function Dashboard() {
   }
 
   async function deleteTimetableEntry(id: string) {
+    if (!user) return;
     setTimetable((prev) => prev.filter((e) => e.id !== id));
     await supabase.from('timetable').delete().eq('id', id);
   }
 
   function openAddModal() {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     setEditingEntry(null);
     setModalOpen(true);
   }
 
   function openEditModal(entry: TimetableEntry) {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     setEditingEntry(entry);
     setModalOpen(true);
   }
 
   async function addTask(e: FormEvent) {
     e.preventDefault();
-    if (!newTask.trim() || !user) return;
+    if (!newTask.trim()) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     setAdding(true);
     const color = TASK_COLORS[tasks.length % TASK_COLORS.length];
     const { data } = await supabase
@@ -361,11 +416,13 @@ export default function Dashboard() {
   }
 
   async function toggleTask(id: string, done: boolean) {
+    if (!user) return;
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !done } : t)));
     await supabase.from('quick_tasks').update({ done: !done }).eq('id', id);
   }
 
   async function deleteTask(id: string) {
+    if (!user) return;
     setTasks((prev) => prev.filter((t) => t.id !== id));
     await supabase.from('quick_tasks').delete().eq('id', id);
   }
@@ -377,32 +434,65 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Welcome hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-800 to-ink-900 p-6 lg:p-8 mb-6">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-800 to-ink-900 p-6 lg:p-8 mb-6 shadow-xl shadow-brand-900/10">
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(93,157,255,0.5) 0%, transparent 50%)' }} />
-        <div className="relative z-10">
-          <p className="text-brand-200/80 text-sm font-medium">{greeting},</p>
-          <h1 className="text-3xl lg:text-4xl font-bold text-white tracking-tight mt-1">
-            {displayName} 👋
-          </h1>
-          <p className="text-brand-100/70 mt-3 max-w-lg">
-            Here's what your week looks like. You have{' '}
-            <span className="font-semibold text-white">{todayClasses.length} classes</span> today,{' '}
-            <span className="font-semibold text-white">{tasks.length - completedCount} pending tasks</span>
-            {dueDsaCount > 0 && (
-              <>
-                , and <span className="font-semibold text-rose-300 animate-pulse">{dueDsaCount} DSA reattempts</span> due today
-              </>
-            )}
-            .
-          </p>
-          <div className="flex flex-wrap gap-3 mt-5">
-            <Pill icon={<Calendar className="w-3.5 h-3.5" />} label={`Today is ${todayName}`} />
-            <Pill icon={<Clock className="w-3.5 h-3.5" />} label={`${todayClasses.length} classes today`} />
-            <Pill icon={<Target className="w-3.5 h-3.5" />} label={`${progress}% tasks done`} />
-            {dueDsaCount > 0 && (
-              <Pill icon={<Clock className="w-3.5 h-3.5 text-rose-300 animate-pulse" />} label={`${dueDsaCount} DSA Reattempts Due`} />
-            )}
+        <div className="relative z-10 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div>
+            <p className="text-brand-200/80 text-sm font-medium">{greeting},</p>
+            <h1 className="text-3xl lg:text-4xl font-bold text-white tracking-tight mt-1">
+              {user ? `${displayName} 👋` : 'Welcome to StudentOS 👋'}
+            </h1>
+            <p className="text-brand-100/70 mt-3 max-w-lg">
+              {user ? (
+                <>
+                  Here's what your week looks like. You have{' '}
+                  <span className="font-semibold text-white">{todayClasses.length} classes</span> today,{' '}
+                  <span className="font-semibold text-white">{tasks.length - completedCount} pending tasks</span>
+                  {dueDsaCount > 0 && (
+                    <>
+                      , and <span className="font-semibold text-rose-300 animate-pulse">{dueDsaCount} DSA reattempts</span> due today
+                    </>
+                  )}
+                  .
+                </>
+              ) : (
+                <>
+                  Your entire student life, organized in one place. Explore AI notes, placement roadmaps, weekly timetables, and daily problem trackers.
+                </>
+              )}
+            </p>
+            <div className="flex flex-wrap gap-3 mt-5">
+              <Pill icon={<Calendar className="w-3.5 h-3.5" />} label={`Today is ${todayName}`} />
+              {user ? (
+                <>
+                  <Pill icon={<Clock className="w-3.5 h-3.5" />} label={`${todayClasses.length} classes today`} />
+                  <Pill icon={<Target className="w-3.5 h-3.5" />} label={`${progress}% tasks done`} />
+                  {dueDsaCount > 0 && (
+                    <Pill icon={<Clock className="w-3.5 h-3.5 text-rose-300 animate-pulse" />} label={`${dueDsaCount} DSA Reattempts Due`} />
+                  )}
+                </>
+              ) : (
+                <>
+                  <Pill icon={<Sparkles className="w-3.5 h-3.5 text-brand-300" />} label="AI Study Tools" />
+                  <Pill icon={<Trophy className="w-3.5 h-3.5 text-amber-300" />} label="DSA & Career Trackers" />
+                  <Pill icon={<Compass className="w-3.5 h-3.5 text-emerald-300" />} label="Smart Schedule" />
+                </>
+              )}
+            </div>
           </div>
+
+          {!user && (
+            <div className="shrink-0 flex items-center self-start">
+              <Link
+                to="/login"
+                id="hero-login-button"
+                className="px-5 py-2.5 rounded-md font-semibold text-sm bg-white text-brand-700 hover:bg-brand-50 shadow-md border border-white/20 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Login</span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -686,7 +776,7 @@ export default function Dashboard() {
             ) : tasks.length === 0 ? (
               <div className="text-center py-8 text-slate-500 text-sm">
                 <Target className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                No tasks yet. Add one above.
+                {user ? 'No tasks yet. Add one above.' : 'No tasks yet. Log in to add and sync your tasks.'}
               </div>
             ) : (
               tasks.map((task) => {
@@ -766,13 +856,13 @@ export default function Dashboard() {
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">No timetable yet</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xs">
-                Add your classes to see your schedule here. It syncs to your account automatically.
+                {user ? 'Add your classes to see your schedule here. It syncs to your account automatically.' : 'Log in to set up your weekly schedule and track your daily classes.'}
               </p>
               <button
                 onClick={openAddModal}
                 className="mt-5 flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
               >
-                <CalendarPlus className="w-4 h-4" /> Set Up Weekly Timetable
+                <CalendarPlus className="w-4 h-4" /> {user ? 'Set Up Weekly Timetable' : 'Log In to Set Up Timetable'}
               </button>
             </div>
           ) : (

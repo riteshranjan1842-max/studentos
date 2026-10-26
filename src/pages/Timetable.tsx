@@ -67,7 +67,10 @@ export default function Timetable() {
 
   useEffect(() => {
     async function load() {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('timetable')
         .select('id, user_id, branch, subject, day_of_week, start_time, end_time, professor, room, color, created_at')

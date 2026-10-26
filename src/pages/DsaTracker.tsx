@@ -323,7 +323,10 @@ export default function DsaTracker() {
 
   useEffect(() => {
     async function load() {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('dsa_tracker')
         .select('id, user_id, problem_name, topic, difficulty, status, solution_link, problem_link, reattempt_at, reattempt_days, ai_judgment, email_sent, updated_at')

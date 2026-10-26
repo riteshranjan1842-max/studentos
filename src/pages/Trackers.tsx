@@ -24,7 +24,10 @@ export default function Trackers() {
 
   useEffect(() => {
     async function load() {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('job_applications')
         .select('id, user_id, company_name, role, status, date_applied, created_at')

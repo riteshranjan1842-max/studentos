@@ -1,9 +1,9 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import { useState } from 'react';
 import {
   GraduationCap, LayoutDashboard, Sparkles, CalendarCheck, TrendingUp, CalendarDays,
   FileText, Globe, Briefcase, Code2, Map, Menu, X, LogOut, ChevronRight, Target, Settings2,
-  Sun, Moon
+  Sun, Moon, LogIn
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -61,14 +61,14 @@ const navSections: NavSection[] = [
 ];
 
 export default function AppLayout() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, session } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [controlCenterOpen, setControlCenterOpen] = useState(false);
   const [controlCenterTab, setControlCenterTab] = useState<'settings' | 'notifications' | 'analytics'>('settings');
 
-  const displayName = profile?.full_name || 'Student';
+  const displayName = profile?.full_name || (session ? 'Student' : 'Guest');
   const initials = displayName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() || 'S';
 
   function closeMobile() {
@@ -126,38 +126,63 @@ export default function AppLayout() {
         ))}
       </nav>
 
-      {/* User card */}
+      {/* User card / Guest action in sidebar */}
       <div className="p-3 border-t border-ink-700/50">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-ink-800/60">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-semibold shrink-0 shadow-md shadow-brand-500/20">
-            {initials}
+        {!session ? (
+          <div className="p-3 rounded-xl bg-ink-800/50 border border-ink-700/60 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Preview Mode</span>
+              <button
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="p-1 rounded text-slate-400 hover:text-white transition-colors"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-tight">
+              Sign in to sync your schedule, tasks, and notes across devices.
+            </p>
+            <Link
+              to="/login"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 border border-brand-500/40 shadow-sm transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Login to Account</span>
+            </Link>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium dark:text-slate-200 text-slate-800 truncate">{displayName}</p>
-            <p className="text-xs text-slate-500 truncate">Student Account</p>
+        ) : (
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-ink-800/60">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-semibold shrink-0 shadow-md shadow-brand-500/20">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium dark:text-slate-200 text-slate-800 truncate">{displayName}</p>
+              <p className="text-xs text-slate-500 truncate">Student Account</p>
+            </div>
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 rounded-lg text-slate-500 hover:bg-ink-700/60 transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-4.5 h-4.5 text-amber-400 animate-fade-in" /> : <Moon className="w-4.5 h-4.5 text-indigo-600 animate-fade-in" />}
+            </button>
+            <button
+              onClick={() => { setControlCenterTab('settings'); setControlCenterOpen(true); }}
+              title="Settings"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => signOut()}
+              title="Sign out"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="p-2 rounded-lg text-slate-500 hover:bg-ink-700/60 transition-colors"
-          >
-            {theme === 'dark' ? <Sun className="w-4.5 h-4.5 text-amber-400 animate-fade-in" /> : <Moon className="w-4.5 h-4.5 text-indigo-600 animate-fade-in" />}
-          </button>
-          <button
-            onClick={() => { setControlCenterTab('settings'); setControlCenterOpen(true); }}
-            title="Settings"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-ink-700/50 transition-colors"
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => signOut()}
-            title="Sign out"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -188,22 +213,70 @@ export default function AppLayout() {
 
         {/* Main content */}
         <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-          {/* Mobile top bar */}
-          <header className="lg:hidden sticky top-0 z-20 glass h-14 flex items-center justify-between px-4">
-            <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-ink-800">
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-brand-500" />
-              <span className="font-semibold text-slate-900 dark:text-white">StudentOS</span>
+          {/* Top navigation bar across both desktop and mobile */}
+          <header className="sticky top-0 z-20 glass h-16 border-b border-ink-700/40 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-ink-800 transition-colors"
+                aria-label="Open menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              
+              <div className="lg:hidden flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-sm shadow-brand-500/20">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <span className="font-semibold text-slate-900 dark:text-white text-base">StudentOS</span>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-2.5">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                  StudentOS
+                </span>
+                {!session && (
+                  <span className="text-xs text-slate-400 font-medium">
+                    • Preview Mode
+                  </span>
+                )}
+              </div>
             </div>
-            <button
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-lg text-slate-500 hover:bg-ink-800 transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
-            </button>
+
+            {/* Top-Right Corner */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-ink-800/60 transition-colors"
+              >
+                {theme === 'dark' ? <Sun className="w-4.5 h-4.5 text-amber-400 animate-fade-in" /> : <Moon className="w-4.5 h-4.5 text-indigo-500 animate-fade-in" />}
+              </button>
+
+              {!session ? (
+                <Link
+                  to="/login"
+                  id="top-right-login-btn"
+                  className="px-5 py-2 rounded-md text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 border border-brand-500/50 shadow-md shadow-brand-600/25 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Login</span>
+                </Link>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { setControlCenterTab('settings'); setControlCenterOpen(true); }}
+                    title="Account Settings"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-ink-800/60 hover:bg-ink-700/60 border border-ink-700/40 text-sm font-medium text-slate-200 transition-colors"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold">
+                      {initials}
+                    </div>
+                    <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </header>
 
           <main key={location.pathname} className="flex-1 animate-fade-in">

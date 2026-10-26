@@ -1,5 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
+
+declare const Deno: any;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -413,7 +416,7 @@ async function fetchLeetCode(): Promise<any> {
     throw new Error(`LeetCode request failed with status ${res.status}`);
   }
 
-  const json = await res.json();
+  const json: any = await res.json();
   const challenge = json.data?.activeDailyCodingChallengeQuestion;
   if (!challenge) {
     throw new Error("No active daily challenge returned from LeetCode");
@@ -434,7 +437,7 @@ async function fetchCodeforces(): Promise<any> {
     throw new Error(`Codeforces API request failed with status ${res.status}`);
   }
 
-  const json = await res.json();
+  const json: any = await res.json();
   if (json.status !== "OK") {
     throw new Error(`Codeforces returned status: ${json.status}`);
   }
@@ -479,7 +482,7 @@ async function fetchGeeksforGeeks(): Promise<any> {
     if (!res.ok) {
       throw new Error(`Status ${res.status}`);
     }
-    const json = await res.json();
+    const json: any = await res.json();
     if (json && json.problem_name && json.problem_url) {
       return {
         title: json.problem_name,
@@ -590,13 +593,13 @@ Deno.serve(async (req: Request) => {
           difficulty: potd.difficulty,
           tags: potd.tags,
         };
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error fetching ${platform}:`, err);
         // Fallback for this specific platform in response
         results[platform] = {
           error: true,
           platform,
-          message: err.message,
+          message: err instanceof Error ? err.message : String(err?.message || err),
           link: platform === "leetcode" ? "https://leetcode.com" :
                 platform === "codechef" ? "https://www.codechef.com" :
                 platform === "geeksforgeeks" ? "https://practice.geeksforgeeks.org/" :
@@ -610,10 +613,10 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  } catch (globalErr) {
+  } catch (globalErr: any) {
     console.error("Global request error:", globalErr);
     return new Response(
-      JSON.stringify({ error: globalErr.message }),
+      JSON.stringify({ error: globalErr instanceof Error ? globalErr.message : String(globalErr?.message || globalErr) }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
